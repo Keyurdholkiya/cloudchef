@@ -20,8 +20,8 @@ def dashboard(request):
 def help(request):
     return render(request, 'help.html')
 
-def contactus(request):
-    return render(request, 'contactus.html')
+# def contactus(request):
+#     return render(request, 'contactus.html')
 
 def aboutus(request):
     return render(request, 'aboutus.html')

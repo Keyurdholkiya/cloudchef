@@ -55,8 +55,8 @@
                 </li>
 
                 <li role="presentation" class="nav-item ">
-                    <a role="menuitem" href="{% url 'contactus' %}" class="nav-link ">
-                        <span>Contact us</span>
+                    <a role="menuitem" href="{% url 'register' %}" class="nav-link ">
+                        <span>Register</span>
                     </a>
                 </li>
 
@@ -116,7 +116,7 @@
                 </li>
 
                 <li class=" o_no_autohide_item">
-                  <a class="nav-link" href="{% url 'register' %}">Register</a>
+                  <a class="nav-link" href="{% url 'login_page' %}">Login</a>
                 </li>
 
 
@@ -126,7 +126,7 @@
                     <div class="oe_structure oe_structure_solo ">
                         <section class="oe_unremovable oe_unmovable s_text_block" data-snippet="s_text_block" data-name="Text">
                             <div class="container">
-                                <a href="{% url 'contactus' %}" class="oe_unremovable btn btn-primary btn_cta">Contact Us</a>
+                                <a href="{% url 'register' %}" class="oe_unremovable btn btn-primary btn_cta">Register</a>
                             </div>
                         </section>
                     </div>
@@ -213,20 +213,20 @@
                             </li>
 
                             <li role="presentation" class="nav-item border-top  px-0">
-                                <a role="menuitem" href="C:/Usehp/Desktop/brigadehomemade/about_us.html" class="nav-link p-3 text-wrap ">
+                                <a role="menuitem" href="{% url 'aboutus' %}" class="nav-link p-3 text-wrap ">
                                     <span>About Us</span>
                                 </a>
                             </li>
 
                             <li role="presentation" class="nav-item border-top  px-0">
-                                <a role="menuitem" href="C:/Users/hp/Desktop/brigadehomemade/helpdesk.html" class="nav-link p-3 text-wrap ">
+                                <a role="menuitem" href="{% url 'help' %}" class="nav-link p-3 text-wrap ">
                                     <span>Help</span>
                                 </a>
                             </li>
 
                             <li role="presentation" class="nav-item border-top border-bottom px-0">
-                                <a role="menuitem" href="contactus.html" class="nav-link p-3 text-wrap ">
-                                    <span>Contact us</span>
+                                <a role="menuitem" href="{% url 'register' %}" class="nav-link p-3 text-wrap ">
+                                    <span>Register</span>
                                 </a>
                             </li>
 
@@ -249,7 +249,7 @@
                         </li>
 
                         <li class=" o_no_autohide_item">
-                            <a href="web/login" class="nav-link o_nav_link_btn w-100 border text-center">Sign in</a>
+                            <a href="{% url 'login_page' %}" class="nav-link o_nav_link_btn w-100 border text-center">Login</a>
                         </li>
 
 
@@ -259,7 +259,7 @@
                             <div class="oe_structure oe_structure_solo ">
                                 <section class="oe_unremovable oe_unmovable s_text_block" data-snippet="s_text_block" data-name="Text">
                                     <div class="container">
-                                        <a href="contactus" class="oe_unremovable btn btn-primary btn_cta w-100">Contact Us</a>
+                                        <a href="{% url 'register' %}" class="oe_unremovable btn btn-primary btn_cta w-100">Register</a>
                                     </div>
                                 </section>
                             </div>

@@ -1,0 +1,41 @@
+{% extends "utils/base.html" %}
+
+{% block start %}
+<div class="container mt-5">
+    <div class="col-6 mx-auto card shadow-lg p-4">
+        <h2 class="text-center">Complete Your Chef Profile</h2>
+        <hr>
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label class="form-label">Chef/Kitchen Name</label>
+                <input type="text" name="chef_name" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">About Your Food/Service</label>
+                <textarea name="description" class="form-control" rows="3" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Location</label>
+                <input type="text" name="location" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Starting Price (₹)</label>
+                <input type="number" name="price" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Upload Food Photos (Select multiple)</label>
+                <input type="file" name="food_images" class="form-control" multiple required>
+                <small class="text-muted">You can select more than one image at once.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Save Profile & Start Selling</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
