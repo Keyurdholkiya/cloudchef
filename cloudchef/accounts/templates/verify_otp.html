@@ -1,0 +1,26 @@
+{% extends "utils/base.html" %}
+
+{% block start %}
+
+<div class="container mt-5 pt-5 pb-5">
+
+  <div class="col-6 mx-auto card shadow p-4" style="border:none">
+      <h3 class="text-center">Verify Your Account</h3>
+      <!-- This line adds context for the user -->
+      <p class="text-center text-muted">Enter the OTP sent to <strong>{{ email }}</strong></p>
+      <hr>
+      <form method="POST">
+        {% include "alerts.html" %}
+        {% csrf_token %}
+
+          <div class="mb-3">
+            <label for="otp-input" class="form-label">Enter OTP</label>
+            <input type="text" name="otp" class="form-control" id="otp-input" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Verify & Login</button>
+        </form>
+  </div>
+</div>
+
+{% endblock %}

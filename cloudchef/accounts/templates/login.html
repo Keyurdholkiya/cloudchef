@@ -1,0 +1,50 @@
+{% extends "utils/base.html" %}
+
+{% block start %}
+
+<div class="container mt-5 pt-5 pb-5">
+  <div class="col-6 mx-auto card shadow p-4" style="border:none">
+      <h3 class="text-center">Login Page - Test Version</h3>
+      <hr>
+
+      <form id="login-form" method="POST">
+        {% include "alerts.html" %}
+        {% csrf_token %}
+          <div class="mb-3">
+            <label for="email-input" class="form-label">Email address</label>
+            <input id="email-input" type="email" name="email" class="form-control" aria-describedby="emailHelp">
+          </div>
+          <div class="mb-3">
+            <label for="password-input" class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" id="password-input">
+          </div>
+
+          <button type="submit" class="btn btn-primary">Login with Password</button>
+
+          <button id="otp-button" type="button" class="btn btn-success" onclick="sendOtp()">Login With OTP</button>
+        </form>
+  </div>
+</div>
+
+<script>
+  function sendOtp() {
+    // This is our primary test. Does this line run?
+    document.getElementById('otp-button').innerText = "SCRIPT IS RUNNING!";
+    console.log("The sendOtp function was definitely called.");
+
+    var emailInput = document.getElementById('email-input');
+    var email = emailInput.value;
+
+    if (email.trim() === "") {
+      alert("Please enter your email address.");
+      document.getElementById('otp-button').innerText = "Login With OTP"; // Reset text
+      return;
+    }
+
+    console.log(`Redirecting with email: ${email}`);
+    window.location.href = `/account/send_otp/${email}/`;
+  }
+</script>
+
+{% endblock %}
+

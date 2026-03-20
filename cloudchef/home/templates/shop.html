@@ -1,0 +1,517 @@
+
+{% extends "utils/base.html" %}
+{% load static %}
+{% block start %}
+</header>
+                <main>
+                    
+
+            
+
+            
+
+
+
+
+
+            <div id="wrap" class="js_sale o_wsale_products_page">
+                <div class="oe_structure oe_empty oe_structure_not_nearest" id="oe_structure_website_sale_products_1"></div>
+                <div id="o_wsale_container" class="oe_website_sale o_wsale_page_contained container o_wsale_layout_catalog   o_wsale_has_sidebar  o_wsale_context_thumb_cover o_wsale_context_thumb_4_3" style="--o-wsale-products-grid-gap: 16px;" data-ppg="20" data-ppr="4" data-default-sort="website_sequence asc">
+                    <div class="row o_wsale_products_main_row flex-nowrap">
+                        <aside id="products_grid_before" class="d-none d-lg-block position-sticky align-self-start col clearfix">
+                            <div class="o_wsale_products_grid_before_rail vh-100 ms-n2 pt-2 px-lg-2 pb-lg-5 ps-2 overflow-y-scroll">
+                                <div class="products_attributes_filters d-empty-none "></div>
+        <div id="o_wsale_price_range_option" class="position-relative accordion accordion-flush  ">
+                <div class="accordion-item">
+                    <h6 class="accordion-header">
+                        <button class="accordion-button px-0 bg-transparent shadow-none" type="button" data-bs-toggle="collapse" aria-expanded="true" data-bs-target="#o_wsale_price_range_option_inner" aria-controls="o_wsale_price_range_option_inner">
+                            <b>Price Range</b>
+                        </button>
+                    </h6>
+                    <div id="o_wsale_price_range_option_inner" class="accordion-collapse collapse show">
+                        <input type="range" multiple="multiple" class="form-range range-with-input " data-currency="₹" data-currency-position="before" data-url="/shop?order=list_price+asc" step="0.01" min="30.000000" max="200.000000" value="30.000000,200.000000"/>
+                    </div>
+                </div>
+        </div>
+                            </div>
+                        </aside>
+                        <div id="products_grid" class="col">
+
+                            <header id="o_wsale_products_header" class="d-flex flex-column gap-2 py-3">
+                                <h1 class="h4-fs">
+                                    All products
+                                </h1>
+                                <div class="products_header btn-toolbar flex-nowrap align-items-center justify-content-between gap-1 gap-lg-2 gap-xl-3">
+                                        
+                                        <div class="o_wsale_products_header_search_form_container product.pricelist() col-xl-5 me-auto ">
+    <form method="get" class="o_searchbar_form s_searchbar_input o_wsale_products_searchbar_form me-auto flex-grow-1 " action="shop@order=list_price+asc" data-snippet="s_searchbar_input">
+            <div role="search" class="input-group ">
+        <input type="search" name="search" class="search-query form-control oe_search_box border-0 text-bg-light border-0 bg-light" placeholder="Search..." value="" data-search-type="products" data-limit="5" data-display-image="true" data-display-description="true" data-display-extra-link="true" data-display-detail="true" data-order-by="name asc"/>
+        <button type="submit" aria-label="Search" title="Search" class="btn oe_search_button btn btn-light">
+            <i class="oi oi-search"></i>
+        </button>
+    </div>
+
+            <input name="order" type="hidden" class="o_search_order_by oe_unremovable" value="name asc"/>
+            
+        
+        </form></div>
+                                        
+                                        <a data-bs-target="#o_wsale_search_modal" data-bs-toggle="modal" role="button" title="Search Products" href="shop@order=list_price+asc" class="btn o_not_editable d-none me-auto btn-light">
+                                            <i class="oi oi-search" role="img"></i>
+                                        </a>
+        <div class="o_sortby_dropdown dropdown dropdown_sorty_by ">
+            <a role="button" href="shop@order=list_price+asc#" data-bs-toggle="dropdown" class="dropdown-toggle btn px-2">
+                <span class="d-md-none">Sort By</span>
+                <small class="d-none d-md-inline opacity-75">Sort By:</small>
+                <span class="d-none d-md-inline">
+                    Price - Low to High
+                    
+                </span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end" role="menu">
+                    <a role="menuitem" rel="noindex,nofollow" href="shop@order=website_sequence+asc" class="dropdown-item ">
+                        <span>Featured</span>
+                    </a>
+                    <a role="menuitem" rel="noindex,nofollow" href="shop@order=publish_date+desc" class="dropdown-item ">
+                        <span>Newest Arrivals</span>
+                    </a>
+                    <a role="menuitem" rel="noindex,nofollow" href="shop@order=name+asc" class="dropdown-item ">
+                        <span>Name (A-Z)</span>
+                    </a>
+                    <a role="menuitem" rel="noindex,nofollow" href="shop@order=list_price+asc" class="dropdown-item active">
+                        <span>Price - Low to High</span>
+                    </a>
+                    <a role="menuitem" rel="noindex,nofollow" href="shop@order=list_price+desc" class="dropdown-item ">
+                        <span>Price - High to Low</span>
+                    </a>
+            </div>
+        </div>
+                                    <button title="Filters" data-bs-toggle="offcanvas" data-bs-target="#o_wsale_offcanvas" class="btn btn-light position-relative d-lg-none  text-nowrap">
+                                        <i class="oi oi-settings-adjust" role="img"></i>
+                                        <small class="ms-1 product.pricelist()">Filters</small>
+                                    </button>
+                                </div>
+                            </header>
+
+                            <div class="o_wsale_products_grid_table_wrapper">
+
+                                <section id="o_wsale_products_grid" class="o_wsale_products_grid_table grid o_wsale_products_grid_table_md" style="--o-wsale-ppr: 4; --o-wsale-ppg: 20" data-name="Grid">
+                                                <div class="oe_product  g-col-6 g-col-md-3 g-col-lg-3 " style="--o-wsale-products-grid-product-col-height: 1;" data-name="Product">
+                                                    <div class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_1_1">
+        <form class="oe_product_cart h-100 d-flex oe_product_cart_has_description" data-publish="on">
+
+            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
+                <input type="hidden" name="csrf_token" value="7da3dc6524f4a94d2dd0c38dbffea2250617aed2o1789746214"/>
+                <a class="oe_product_image_link d-block position-relative" contenteditable="false" href="shop/thepla-2">
+                    <span class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"><img src="web/image/product.template/2/image_512/Thepla@unique=be14a92" class="img img-fluid h-100 w-100 position-absolute" alt="Thepla" loading="lazy"/></span>
+
+                    <span class="o_ribbon o_not_editable d-none" style=" "></span>
+                </a>
+            </div>
+            <div class="o_wsale_product_information position-relative d-flex flex-grow-1 flex-shrink-1">
+                <div class="o_wsale_product_information_text">
+                    <h6 class="o_wsale_products_item_title mb-2 text-break">
+                        <a class="text-decoration-none" href="shops/thepla/cart" content="Thepla">Thepla</a>
+                    </h6>
+            <div class="oe_subdescription mb-2 text-muted small" contenteditable="false">
+                <div>Gujarat’s ultimate snack flatbread.</div>
+            </div>
+
+                </div>
+                <div class="o_wsale_product_sub d-flex align-items-center justify-content-between flex-nowrap gap-3">
+                    <div class="product_price">
+                        <span class="h6 mb-0" data-oe-type="monetary" data-oe-expression="template_price_vals[&#39;price_reduce&#39;]">₹ <span class="oe_currency_value">30.00</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="o_wsale_product_btn o_wsale_product_btn_catalog d-flex gap-2">
+        </div>
+        </form>
+                                                    </div>
+                                                </div>
+                                                <div class="oe_product  g-col-6 g-col-md-3 g-col-lg-3 " style="--o-wsale-products-grid-product-col-height: 1;" data-name="Product">
+                                                    <div class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_1_1">
+        <form class="oe_product_cart h-100 d-flex oe_product_cart_has_description" data-publish="on">
+
+            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
+                <input type="hidden" name="csrf_token" value="7da3dc6524f4a94d2dd0c38dbffea2250617aed2o1789746214"/>
+                <a class="oe_product_image_link d-block position-relative" contenteditable="false" href="shop/vegetable-sandwich-10">
+                    <span class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"><img src="web/image/product.template/10/image_512/Vegetable&#32;Sandwich@unique=f0276d3" class="img img-fluid h-100 w-100 position-absolute" alt="Vegetable Sandwich" loading="lazy"/></span>
+
+                    <span class="o_ribbon o_not_editable d-none" style=" "></span>
+                </a>
+            </div>
+            <div class="o_wsale_product_information position-relative d-flex flex-grow-1 flex-shrink-1">
+                <div class="o_wsale_product_information_text">
+                    <h6 class="o_wsale_products_item_title mb-2 text-break">
+                        <a class="text-decoration-none" href="shop/vegetable-sandwich-10" content="Vegetable Sandwich">Vegetable Sandwich</a>
+                    </h6>
+            <div class="oe_subdescription mb-2 text-muted small" contenteditable="false">
+                <div>Soft bread + crunchy veggies + chutney + cheese.</div>
+            </div>
+
+                </div>
+                <div class="o_wsale_product_sub d-flex align-items-center justify-content-between flex-nowrap gap-3">
+                    <div class="product_price">
+                        <span class="h6 mb-0" data-oe-type="monetary" data-oe-expression="template_price_vals[&#39;price_reduce&#39;]">₹ <span class="oe_currency_value">50.00</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="o_wsale_product_btn o_wsale_product_btn_catalog d-flex gap-2">
+        </div>
+        </form>
+                                                    </div>
+                                                </div>
+                                                <div class="oe_product  g-col-6 g-col-md-3 g-col-lg-3 " style="--o-wsale-products-grid-product-col-height: 1;" data-name="Product">
+                                                    <div class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_1_1">
+        <form class="oe_product_cart h-100 d-flex oe_product_cart_has_description" data-publish="on">
+
+            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
+                <input type="hidden" name="csrf_token" value="7da3dc6524f4a94d2dd0c38dbffea2250617aed2o1789746214"/>
+                <a class="oe_product_image_link d-block position-relative" contenteditable="false" href="shop/khaman-6">
+                    <span class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"><img src="web/image/product.template/6/image_512/Khaman@unique=27142ce" class="img img-fluid h-100 w-100 position-absolute" alt="Khaman" loading="lazy"/></span>
+
+                    <span class="o_ribbon o_not_editable d-none" style=" "></span>
+                </a>
+            </div>
+            <div class="o_wsale_product_information position-relative d-flex flex-grow-1 flex-shrink-1">
+                <div class="o_wsale_product_information_text">
+                    <h6 class="o_wsale_products_item_title mb-2 text-break">
+                        <a class="text-decoration-none" href="shop/khaman-6" content="Khaman">Khaman</a>
+                    </h6>
+            <div class="oe_subdescription mb-2 text-muted small" contenteditable="false">
+                <div>soft, fluffy, spongy yellow squares of happiness</div>
+            </div>
+
+                </div>
+                <div class="o_wsale_product_sub d-flex align-items-center justify-content-between flex-nowrap gap-3">
+                    <div class="product_price">
+                        <span class="h6 mb-0" data-oe-type="monetary" data-oe-expression="template_price_vals[&#39;price_reduce&#39;]">₹ <span class="oe_currency_value">50.00</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="o_wsale_product_btn o_wsale_product_btn_catalog d-flex gap-2">
+        </div>
+        </form>
+                                                    </div>
+                                                </div>
+                                                <div class="oe_product  g-col-6 g-col-md-3 g-col-lg-3 " style="--o-wsale-products-grid-product-col-height: 1;" data-name="Product">
+                                                    <div class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_1_1">
+        <form class="oe_product_cart h-100 d-flex oe_product_cart_has_description" data-publish="on">
+
+            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
+                <input type="hidden" name="csrf_token" value="7da3dc6524f4a94d2dd0c38dbffea2250617aed2o1789746214"/>
+                <a class="oe_product_image_link d-block position-relative" contenteditable="false" href="shop/pani-puri-5">
+                    <span class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"><img src="web/image/product.template/5/image_512/Pani&#32;puri@unique=a15b504" class="img img-fluid h-100 w-100 position-absolute" alt="Pani puri" loading="lazy"/></span>
+
+                    <span class="o_ribbon o_not_editable d-none" style=" "></span>
+                </a>
+            </div>
+            <div class="o_wsale_product_information position-relative d-flex flex-grow-1 flex-shrink-1">
+                <div class="o_wsale_product_information_text">
+                    <h6 class="o_wsale_products_item_title mb-2 text-break">
+                        <a class="text-decoration-none" href="shop/pani-puri-5" content="Pani puri">Pani puri</a>
+                    </h6>
+            <div class="oe_subdescription mb-2 text-muted small" contenteditable="false">
+                <div>Snack that slaps, zero crumbs, max drama</div>
+            </div>
+
+                </div>
+                <div class="o_wsale_product_sub d-flex align-items-center justify-content-between flex-nowrap gap-3">
+                    <div class="product_price">
+                        <span class="h6 mb-0" data-oe-type="monetary" data-oe-expression="template_price_vals[&#39;price_reduce&#39;]">₹ <span class="oe_currency_value">70.00</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="o_wsale_product_btn o_wsale_product_btn_catalog d-flex gap-2">
+        </div>
+        </form>
+                                                    </div>
+                                                </div>
+                                                <div class="oe_product  g-col-6 g-col-md-3 g-col-lg-3 " style="--o-wsale-products-grid-product-col-height: 1;" data-name="Product">
+                                                    <div class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_1_1">
+        <form class="oe_product_cart h-100 d-flex oe_product_cart_has_description" data-publish="on">
+
+            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
+                <input type="hidden" name="csrf_token" value="7da3dc6524f4a94d2dd0c38dbffea2250617aed2o1789746214"/>
+                <a class="oe_product_image_link d-block position-relative" contenteditable="false" href="shop/aloo-paratha-9">
+                    <span class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"><img src="web/image/product.template/9/image_512/Aloo&#32;Paratha@unique=6e7ca5f" class="img img-fluid h-100 w-100 position-absolute" alt="Aloo Paratha" loading="lazy"/></span>
+
+                    <span class="o_ribbon o_not_editable d-none" style=" "></span>
+                </a>
+            </div>
+            <div class="o_wsale_product_information position-relative d-flex flex-grow-1 flex-shrink-1">
+                <div class="o_wsale_product_information_text">
+                    <h6 class="o_wsale_products_item_title mb-2 text-break">
+                        <a class="text-decoration-none" href="shop/aloo-paratha-9" content="Aloo Paratha">Aloo Paratha</a>
+                    </h6>
+            <div class="oe_subdescription mb-2 text-muted small" contenteditable="false">
+                <div>Hot, buttery flatbread stuffed with spiced potato</div>
+            </div>
+
+                </div>
+                <div class="o_wsale_product_sub d-flex align-items-center justify-content-between flex-nowrap gap-3">
+                    <div class="product_price">
+                        <span class="h6 mb-0" data-oe-type="monetary" data-oe-expression="template_price_vals[&#39;price_reduce&#39;]">₹ <span class="oe_currency_value">100.00</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="o_wsale_product_btn o_wsale_product_btn_catalog d-flex gap-2">
+        </div>
+        </form>
+                                                    </div>
+                                                </div>
+                                                <div class="oe_product  g-col-6 g-col-md-3 g-col-lg-3 " style="--o-wsale-products-grid-product-col-height: 1;" data-name="Product">
+                                                    <div class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_1_1">
+        <form class="oe_product_cart h-100 d-flex oe_product_cart_has_description" data-publish="on">
+
+            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
+                <input type="hidden" name="csrf_token" value="7da3dc6524f4a94d2dd0c38dbffea2250617aed2o1789746214"/>
+                <a class="oe_product_image_link d-block position-relative" contenteditable="false" href="shop/pav-bhaji-7">
+                    <span class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"><img src="web/image/product.template/7/image_512/Pav&#32;Bhaji@unique=da79789" class="img img-fluid h-100 w-100 position-absolute" alt="Pav Bhaji" loading="lazy"/></span>
+
+                    <span class="o_ribbon o_not_editable d-none" style=" "></span>
+                </a>
+            </div>
+            <div class="o_wsale_product_information position-relative d-flex flex-grow-1 flex-shrink-1">
+                <div class="o_wsale_product_information_text">
+                    <h6 class="o_wsale_products_item_title mb-2 text-break">
+                        <a class="text-decoration-none" href="shop/pav-bhaji-7" content="Pav Bhaji">Pav Bhaji</a>
+                    </h6>
+            <div class="oe_subdescription mb-2 text-muted small" contenteditable="false">
+                <div>Buttery pav + spicy mashed veggie curry combo</div>
+            </div>
+
+                </div>
+                <div class="o_wsale_product_sub d-flex align-items-center justify-content-between flex-nowrap gap-3">
+                    <div class="product_price">
+                        <span class="h6 mb-0" data-oe-type="monetary" data-oe-expression="template_price_vals[&#39;price_reduce&#39;]">₹ <span class="oe_currency_value">120.00</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="o_wsale_product_btn o_wsale_product_btn_catalog d-flex gap-2">
+        </div>
+        </form>
+                                                    </div>
+                                                </div>
+                                                <div class="oe_product  g-col-6 g-col-md-3 g-col-lg-3 " style="--o-wsale-products-grid-product-col-height: 1;" data-name="Product">
+                                                    <div class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_1_1">
+        <form class="oe_product_cart h-100 d-flex oe_product_cart_has_description" data-publish="on">
+
+            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
+                <input type="hidden" name="csrf_token" value="7da3dc6524f4a94d2dd0c38dbffea2250617aed2o1789746214"/>
+                <a class="oe_product_image_link d-block position-relative" contenteditable="false" href="shop/dosa-4">
+                    <span class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"><img src="web/image/product.template/4/image_512/Dosa@unique=0fe0cab" class="img img-fluid h-100 w-100 position-absolute" alt="Dosa" loading="lazy"/></span>
+
+                    <span class="o_ribbon o_not_editable d-none" style=" "></span>
+                </a>
+            </div>
+            <div class="o_wsale_product_information position-relative d-flex flex-grow-1 flex-shrink-1">
+                <div class="o_wsale_product_information_text">
+                    <h6 class="o_wsale_products_item_title mb-2 text-break">
+                        <a class="text-decoration-none" href="shop/dosa-4" content="Dosa">Dosa</a>
+                    </h6>
+            <div class="oe_subdescription mb-2 text-muted small" contenteditable="false">
+                <div>The OG South Indian crepe.</div>
+            </div>
+
+                </div>
+                <div class="o_wsale_product_sub d-flex align-items-center justify-content-between flex-nowrap gap-3">
+                    <div class="product_price">
+                        <span class="h6 mb-0" data-oe-type="monetary" data-oe-expression="template_price_vals[&#39;price_reduce&#39;]">₹ <span class="oe_currency_value">150.00</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="o_wsale_product_btn o_wsale_product_btn_catalog d-flex gap-2">
+        </div>
+        </form>
+                                                    </div>
+                                                </div>
+                                                <div class="oe_product  g-col-6 g-col-md-3 g-col-lg-3 " style="--o-wsale-products-grid-product-col-height: 1;" data-name="Product">
+                                                    <div class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_1_1">
+        <form class="oe_product_cart h-100 d-flex oe_product_cart_has_description" data-publish="on">
+
+            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
+                <input type="hidden" name="csrf_token" value="7da3dc6524f4a94d2dd0c38dbffea2250617aed2o1789746214"/>
+                <a class="oe_product_image_link d-block position-relative" contenteditable="false" href="shop/gujarati-thali-8">
+                    <span class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"><img src="web/image/product.template/8/image_512/Gujarati&#32;Thali@unique=25d2a3c" class="img img-fluid h-100 w-100 position-absolute" alt="Gujarati Thali" loading="lazy"/></span>
+
+                    <span class="o_ribbon o_not_editable d-none" style=" "></span>
+                </a>
+            </div>
+            <div class="o_wsale_product_information position-relative d-flex flex-grow-1 flex-shrink-1">
+                <div class="o_wsale_product_information_text">
+                    <h6 class="o_wsale_products_item_title mb-2 text-break">
+                        <a class="text-decoration-none" href="shop/gujarati-thali-8" content="Gujarati Thali">Gujarati Thali</a>
+                    </h6>
+            <div class="oe_subdescription mb-2 text-muted small" contenteditable="false">
+                <div>A whole feast on one plate</div>
+            </div>
+
+                </div>
+                <div class="o_wsale_product_sub d-flex align-items-center justify-content-between flex-nowrap gap-3">
+                    <div class="product_price">
+                        <span class="h6 mb-0" data-oe-type="monetary" data-oe-expression="template_price_vals[&#39;price_reduce&#39;]">₹ <span class="oe_currency_value">200.00</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="o_wsale_product_btn o_wsale_product_btn_catalog d-flex gap-2">
+        </div>
+        </form>
+                                                    </div>
+                                                </div>
+                                </section>
+                            </div>
+                            <div id="o_wsale_pager" class="products_pager d-flex justify-content-center py-5 pb-4">
+                            </div>
+                        </div>
+                    </div>
+
+        <aside id="o_wsale_offcanvas" class="o_website_offcanvas offcanvas offcanvas-end p-0">
+            <div class="offcanvas-header justify-content-end">
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body flex-grow-0 overflow-visible">
+    <form method="get" class="o_searchbar_form s_searchbar_input o_wsale_products_searchbar_form me-auto flex-grow-1 " action="shop@order=list_price+asc" data-snippet="s_searchbar_input">
+            <div role="search" class="input-group ">
+        <input type="search" name="search" class="search-query form-control oe_search_box border-0 text-bg-light border-0 bg-light" placeholder="Search..." value="" data-search-type="products" data-limit="5" data-display-image="true" data-display-description="true" data-display-extra-link="true" data-display-detail="true" data-order-by="name asc"/>
+        <button type="submit" aria-label="Search" title="Search" class="btn oe_search_button btn btn-light">
+            <i class="oi oi-search"></i>
+        </button>
+    </div>
+
+            <input name="order" type="hidden" class="o_search_order_by oe_unremovable" value="name asc"/>
+            
+        
+        </form>
+            </div>
+            <div id="o_wsale_offcanvas_content" class="accordion accordion-flush flex-grow-1 overflow-auto">
+                
+        <form method="get" class="js_attributes accordion accordion-flush d-flex flex-column  wsale_accordion_collapsible accordion accordion-flush" action="shop@order=list_price+asc">
+
+        </form>
+        <div id="o_wsale_price_range_option" class="position-relative o_wsale_offcanvas_title accordion accordion-flush px-4 ">
+                <div class="accordion-item">
+                    <h6 class="accordion-header">
+                        <button class="accordion-button px-0 bg-transparent shadow-none" type="button" data-bs-toggle="collapse" aria-expanded="true" data-bs-target="#o_wsale_price_range_option_inner" aria-controls="o_wsale_price_range_option_inner">
+                            <b>Price Range</b>
+                        </button>
+                    </h6>
+                    <div id="o_wsale_price_range_option_inner" class="accordion-collapse collapse show">
+                        <input type="range" multiple="multiple" class="form-range range-with-input " data-currency="₹" data-currency-position="before" data-url="/shop?order=list_price+asc" step="0.01" min="30.000000" max="200.000000" value="30.000000,200.000000"/>
+                    </div>
+                </div>
+        </div>
+            </div>
+            <div class="offcanvas-body d-flex justify-content-between flex-grow-0 border-top overflow-hidden">
+                <a title="Clear Filters" class="btn btn-light d-flex py-1 mb-2 disabled" aria-disabled="true" href="shop@order=list_price+asc">
+                    Clear Filters
+                </a>
+            </div>
+        </aside>
+                </div>
+                <div class="oe_structure oe_empty oe_structure_not_nearest" id="oe_structure_website_sale_products_2"></div>
+            </div>
+            <div id="o_wsale_search_modal" class="modal fade css_editable_mode_hidden" aria-hidden="true" tabindex="-1">
+                <div class="modal-dialog modal-lg pt-5">
+                    <div class="modal-content mt-5 bg-transparent border-0">
+                        <div class="o_container_small">
+    <form method="get" class="o_searchbar_form s_searchbar_input " data-snippet="s_searchbar_input">
+            <div role="search" class="input-group input-group rounded o_cc o_cc1 mb-1">
+        <input type="search" name="search" class="search-query form-control oe_search_box border-0 p-3 " placeholder="Search..." value="" data-search-type="products" data-limit="5" data-display-image="true" data-display-description="true" data-display-extra-link="true" data-display-detail="true" data-order-by="name asc"/>
+        <button type="submit" aria-label="Search" title="Search" class="btn oe_search_button px-4">
+            <i class="oi oi-search"></i>
+        </button>
+    </div>
+
+            <input name="order" type="hidden" class="o_search_order_by oe_unremovable" value="name asc"/>
+            
+                            
+        </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+        <div id="o_shared_blocks" class="oe_unremovable"></div>
+                </main>
+                <footer id="bottom" data-anchor="true" data-name="Footer" class="o_footer o_colored_level o_cc ">
+                    <div id="footer" class="oe_structure oe_structure_solo">
+            <section class="s_text_block pt40 pb16" data-snippet="s_text_block" data-name="Text">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-2 pt24 pb24 o_colored_level">
+                            <h5 class="mb-3">Useful Links</h5>
+                            <ul class="list-unstyled">
+                                <li><a href="index.html">Home</a></li>
+                                <li><a href="shop@order=list_price+asc#">About us</a></li>
+                                <li><a href="shop@order=list_price+asc#">Products</a></li>
+                                <li><a href="shop@order=list_price+asc#">Services</a></li>
+                                <li><a href="shop@order=list_price+asc#">Legal</a></li>
+                                <li>
+                                    <a href="privacy">Privacy Policy</a>
+                                </li><li>
+                                    <a href="https://brigadehomemade.odoo.com/help">Help</a>
+                                </li>
+                                <li><a href="contactus">Contact us</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-5 pt24 pb24 o_colored_level">
+                            <h5 class="mb-3">About us</h5>
+                            <div style="text-align: justify;">Too often, extra meals go to waste while many people crave fresh, home-style food. That’s why we built this platform — a space where <strong>home chefs can share their meals</strong> and <strong>food lovers can enjoy authentic, affordable dishes.</strong></div><div style="text-align: justify;"><br/></div><div style="text-align: justify;">Our mission is to:</div><div style="text-align: justify;"><span class="oe-tabs" style="width: 13.5px;">	</span>​Reduce food waste&nbsp;</div><div style="text-align: justify;">
+<span class="oe-tabs" style="width: 13.5px;">	</span>​Support home chefs&nbsp;</div><div style="text-align: justify;">
+<span class="oe-tabs" style="width: 13.5px;">	</span>​Deliver fresh, homemade meals</div><div style="text-align: justify;">
+<span class="oe-tabs" style="width: 13.5px;">	</span>​Build a caring food community&nbsp;</div>
+                        </div>
+                        <div id="connect" class="col-lg-4 offset-lg-1 pt24 pb24 o_colored_level">
+                            <h5 class="mb-3">Connect with us</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fa fa-envelope fa-fw me-2"></i><span><a href="mailto:info@yourcompany.example.com">brigade@gmail.com</a></span></li>
+                                <li><i class="fa fa-phone fa-fw me-2"></i><span class="o_force_ltr"><a href="tel:+911234567890">+91 1234567890</a></span></li>
+                            </ul>
+                            <div class="s_social_media text-start o_not_editable" data-snippet="s_social_media" data-name="Social Media">
+                                <h5 class="s_social_media_title d-none">Follow us</h5>
+<a href="https://brigadehomemade.odoo.com/website/social/facebook" class="s_social_media_facebook" target="_blank" aria-label="Facebook">
+                                    <i class="fa fa-facebook rounded-circle shadow-sm o_editable_media"></i>
+                                </a>
+<a href="https://brigadehomemade.odoo.com/website/social/twitter" class="s_social_media_twitter" target="_blank" aria-label="X">
+                                    <i class="fa fa-twitter rounded-circle shadow-sm o_editable_media"></i>
+                                </a>
+<a href="https://brigadehomemade.odoo.com/website/social/linkedin" class="s_social_media_linkedin" target="_blank" aria-label="LinkedIn">
+                                    <i class="fa fa-linkedin rounded-circle shadow-sm o_editable_media"></i>
+                                </a>
+<a href="index.html" class="text-800" aria-label="Extra page">
+                                    <i class="fa fa-home rounded-circle shadow-sm o_editable_media"></i>
+                                </a>
+</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    <div class="o_footer_copyright o_colored_level o_cc" data-name="Copyright">
+                        <div class="container py-3">
+                            <div class="row">
+                                <div class="col-sm text-center text-sm-start text-muted">
+                                    <span class="o_footer_copyright_name me-2">​Copyright© @Brigade</span>
+        
+        
+    </div>
+                                <div class="col-sm text-center text-sm-end o_not_editable">
+        <div class="o_brand_promotion">
+        Powered by 
+            <a target="_blank" class="badge text-bg-light" href="http://www.odoo.com?utm_source=db&amp;utm_medium=website">
+                <img alt="Odoo" src="web/static/img/odoo_logo_tiny.png" width="62" height="20" style="width: auto; height: 1em; vertical-align: baseline;" loading="lazy"/>
+            </a>
+        - 
+                    The #1 <a target="_blank" href="http://www.odoo.com/app/ecommerce?utm_source=db&amp;utm_medium=website">Open Source eCommerce</a>
+                
+        </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+{% endblock %}
