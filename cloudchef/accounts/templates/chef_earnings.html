@@ -1,0 +1,323 @@
+{% extends "chef_panel_base.html" %}
+
+{% block chef_page %}
+<style>
+  .ce-hero {
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 18px;
+  }
+  .ce-hero-card,
+  .ce-chart-card,
+  .ce-insight-card {
+    border-radius: 26px;
+    padding: 20px;
+    border: 1px solid var(--cc-border);
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,248,239,.96));
+    box-shadow: 0 18px 34px rgba(76, 41, 22, 0.08);
+  }
+  .ce-hero-banner {
+    min-height: 230px;
+    color: #fff;
+    background:
+      radial-gradient(circle at top right, rgba(255,255,255,.16), transparent 24%),
+      linear-gradient(135deg, var(--cc-nav-start), var(--cc-nav-mid), var(--cc-nav-end));
+  }
+  .ce-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: .45rem .85rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--cc-accent) 22%, white 78%);
+    font-size: .8rem;
+    font-weight: 800;
+  }
+  .ce-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .ce-kpi {
+    padding: 16px;
+    border-radius: 22px;
+    border: 1px solid var(--cc-border);
+    background: rgba(255,255,255,.9);
+  }
+  .ce-kpi strong {
+    display: block;
+    margin-top: 8px;
+    font-size: 1.8rem;
+    line-height: 1;
+    font-family: var(--cc-font-heading);
+  }
+  .ce-grid {
+    display: grid;
+    grid-template-columns: 1.2fr .8fr;
+    gap: 16px;
+  }
+  .ce-line-chart {
+    display: flex;
+    align-items: end;
+    gap: 14px;
+    min-height: 220px;
+    margin-top: 18px;
+    padding: 16px 8px 8px;
+    border-radius: 22px;
+    background:
+      linear-gradient(to top, rgba(0,0,0,.04) 1px, transparent 1px);
+    background-size: 100% 42px;
+  }
+  .ce-line-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .ce-line-bar {
+    width: 100%;
+    max-width: 56px;
+    border-radius: 18px 18px 8px 8px;
+    background: linear-gradient(180deg, var(--cc-accent), var(--cc-primary));
+    box-shadow: 0 16px 24px rgba(181,49,13,.18);
+  }
+  .ce-line-label {
+    font-size: .8rem;
+    color: var(--cc-muted);
+    font-weight: 700;
+    text-align: center;
+  }
+  .ce-progress-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+  }
+  .ce-progress-card {
+    padding: 16px;
+    border-radius: 22px;
+    border: 1px solid var(--cc-border);
+    background: rgba(255,255,255,.9);
+    text-align: center;
+  }
+  .ce-progress-ring {
+    --p: 60;
+    width: 108px;
+    height: 108px;
+    margin: 12px auto 10px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(closest-side, var(--cc-surface) 74%, transparent 76% 100%),
+      conic-gradient(var(--cc-primary) calc(var(--p) * 1%), rgba(0,0,0,.08) 0);
+    font-family: var(--cc-font-heading);
+    font-weight: 800;
+  }
+  .ce-bar-list {
+    display: grid;
+    gap: 14px;
+    margin-top: 18px;
+  }
+  .ce-bar-row { display: grid; gap: 8px; }
+  .ce-bar-track {
+    height: 14px;
+    border-radius: 999px;
+    background: rgba(0,0,0,.06);
+    overflow: hidden;
+  }
+  .ce-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--cc-primary), var(--cc-accent));
+  }
+  .ce-summary-box {
+    display: grid;
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .ce-summary-item {
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.88);
+    border: 1px solid var(--cc-border);
+  }
+  @media (max-width: 1100px) {
+    .ce-hero, .ce-grid { grid-template-columns: 1fr; }
+    .ce-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 700px) {
+    .ce-kpi-grid, .ce-progress-grid { grid-template-columns: 1fr; }
+    .ce-hero-card,
+    .ce-chart-card,
+    .ce-insight-card {
+      padding: 16px;
+      border-radius: 20px;
+    }
+    .ce-line-chart {
+      gap: 8px;
+      min-height: 180px;
+      padding: 12px 4px 4px;
+      overflow-x: auto;
+    }
+    .ce-line-step {
+      min-width: 58px;
+    }
+    .ce-line-bar {
+      max-width: 42px;
+    }
+    .ce-progress-ring {
+      width: 92px;
+      height: 92px;
+    }
+  }
+</style>
+
+<section class="ce-hero">
+  <div class="ce-hero-card ce-hero-banner">
+    <span class="ce-chip">Earnings Center</span>
+    <h2 class="mt-3 mb-2" style="font-size: 2.4rem; line-height: 1; font-family: var(--cc-font-heading);">
+      Earnings Analytics
+    </h2>
+    <p class="mb-0" style="max-width: 54ch; opacity: .92;">
+      Revenue trend, top dishes, progress charts aur monthly performance ko ek dedicated screen me clearly dekho.
+    </p>
+  </div>
+  <div class="ce-hero-card">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h4 class="mb-0">Today Summary</h4>
+      <span class="ce-chip">Live</span>
+    </div>
+    <p class="text-muted mb-3">Aaj ke orders aur earning ka quick snapshot.</p>
+    <div class="ce-summary-box">
+      <div class="ce-summary-item">
+        <div class="small text-muted">Orders Today</div>
+        <strong style="font-size: 1.5rem; font-family: var(--cc-font-heading);">{{ orders_today }}</strong>
+      </div>
+      <div class="ce-summary-item">
+        <div class="small text-muted">Earnings Today</div>
+        <strong style="font-size: 1.5rem; font-family: var(--cc-font-heading);">Rs. {{ earnings_today }}</strong>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cp-content-card">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="mb-1">Key Earnings Metrics</h3>
+      <p class="cp-subtle mb-0">Chef business performance ke main revenue indicators.</p>
+    </div>
+    <span class="ce-chip">Overview</span>
+  </div>
+  <div class="ce-kpi-grid">
+    <div class="ce-kpi">
+      <small class="text-muted">Total Earn</small>
+      <strong>Rs. {{ total_earnings }}</strong>
+    </div>
+    <div class="ce-kpi">
+      <small class="text-muted">Month Earn</small>
+      <strong>Rs. {{ month_earnings }}</strong>
+    </div>
+    <div class="ce-kpi">
+      <small class="text-muted">Profit</small>
+      <strong>Rs. {{ profit_earnings }}</strong>
+    </div>
+    <div class="ce-kpi">
+      <small class="text-muted">Loss</small>
+      <strong>Rs. {{ loss_earnings }}</strong>
+    </div>
+  </div>
+</section>
+
+<section class="ce-grid">
+  <div class="ce-chart-card">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="mb-1">Line Chart</h4>
+        <p class="text-muted mb-0">Revenue flow ka visual comparison.</p>
+      </div>
+      <span class="ce-chip">Line</span>
+    </div>
+    <div class="ce-line-chart">
+      {% for item in earnings_graph %}
+      <div class="ce-line-step">
+        <div class="ce-line-bar" style="height: {{ item.width }}%;"></div>
+        <div class="ce-line-label">{{ item.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="ce-chart-card">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="mb-1">Progress Charts</h4>
+        <p class="text-muted mb-0">Goal aur paid share ko progress view me dekho.</p>
+      </div>
+      <span class="ce-chip">Progress</span>
+    </div>
+    <div class="ce-progress-grid">
+      <div class="ce-progress-card">
+        <div class="small text-muted">Paid Revenue Share</div>
+        <div class="ce-progress-ring" style="--p:{{ profit_percent }}">{{ profit_percent }}%</div>
+        <div class="small text-muted">Paid orders contribution</div>
+      </div>
+      <div class="ce-progress-card">
+        <div class="small text-muted">Monthly Progress</div>
+        <div class="ce-progress-ring" style="--p:{{ month_percent }}">{{ month_percent }}%</div>
+        <div class="small text-muted">Current month vs overall</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ce-grid">
+  <div class="ce-chart-card">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="mb-1">Top Dishes Bar Chart</h4>
+        <p class="text-muted mb-0">Kaunse dishes sabse zyada earn kar rahi hain.</p>
+      </div>
+      <span class="ce-chip">Bar</span>
+    </div>
+    <div class="ce-bar-list">
+      {% for item in top_dish_graph %}
+      <div class="ce-bar-row">
+        <div class="d-flex justify-content-between">
+          <strong>{{ item.name }}</strong>
+          <span class="text-muted">Rs. {{ item.value }} | {{ item.order_count }} orders</span>
+        </div>
+        <div class="ce-bar-track"><div class="ce-bar-fill" style="width: {{ item.width }}%;"></div></div>
+      </div>
+      {% empty %}
+      <div class="text-muted">No top dish earnings yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="ce-chart-card">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="mb-1">Insights</h4>
+        <p class="text-muted mb-0">Readable summary for quick decision making.</p>
+      </div>
+      <span class="ce-chip">Insights</span>
+    </div>
+    <div class="ce-summary-box">
+      <div class="ce-summary-item">
+        <div class="small text-muted">Best earning metric</div>
+        <strong style="font-family: var(--cc-font-heading);">Rs. {{ total_earnings }}</strong>
+      </div>
+      <div class="ce-summary-item">
+        <div class="small text-muted">This month collection</div>
+        <strong style="font-family: var(--cc-font-heading);">Rs. {{ month_earnings }}</strong>
+      </div>
+      <div class="ce-summary-item">
+        <div class="small text-muted">Pending amount</div>
+        <strong style="font-family: var(--cc-font-heading);">Rs. {{ loss_earnings }}</strong>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,233 @@
+{% extends "utils/base.html" %}
+
+{% block start %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0 cc-panel-title">Your Cart</h2>
+    <a href="{% url 'shop' %}" class="btn btn-outline-danger btn-sm">Continue Shopping</a>
+  </div>
+
+  <div id="ccCartContent">
+    {% if items %}
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="card p-3 cc-soft" id="ccCartItemsWrap">
+          {% for item in items %}
+          <div class="d-flex gap-3 align-items-center border-bottom py-3 cc-cart-row" data-dish-id="{{ item.dish.id }}">
+            {% if item.dish.image %}
+            <img src="{{ item.dish.image.url }}" alt="{{ item.dish.name }}" width="90" height="90" style="object-fit:cover;border-radius:10px;" loading="lazy" decoding="async">
+            {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center" style="width:90px;height:90px;border-radius:10px;">No img</div>
+            {% endif %}
+            <div class="flex-grow-1">
+              <h5 class="mb-1">{{ item.dish.name }}</h5>
+              <div class="small text-muted mb-2">Rs. {{ item.dish.price }} each</div>
+              <div class="cc-qty-control">
+                <button
+                  type="button"
+                  class="cc-qty-btn"
+                  data-cart-action="decrease"
+                  data-cart-url="{% url 'update_cart_quantity' item.dish.id %}?action=decrease"
+                >-</button>
+                <span class="cc-qty-value" data-qty>{{ item.quantity }}</span>
+                <button
+                  type="button"
+                  class="cc-qty-btn"
+                  data-cart-action="increase"
+                  data-cart-url="{% url 'update_cart_quantity' item.dish.id %}?action=increase"
+                >+</button>
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold mb-2" data-line-total>Rs. {{ item.line_total }}</div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary cc-remove-cart-btn"
+                data-cart-url="{% url 'remove_from_cart' item.dish.id %}"
+              >Remove</button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card p-3 cc-soft">
+          <h5 class="mb-3 cc-panel-title">Order Summary</h5>
+          <div class="d-flex justify-content-between mb-3">
+            <span>Total</span>
+            <strong id="ccCartTotal">Rs. {{ total }}</strong>
+          </div>
+          {% if request.user.is_authenticated and saved_addresses %}
+          <button type="button" class="btn btn-outline-danger w-100 mb-2" id="ccDrawerToggle">Quick Checkout with Saved Address</button>
+          <div class="cc-mini-checkout-drawer" id="ccMiniCheckoutDrawer" hidden>
+            <div class="small text-muted mb-2">Saved address select karke direct prefilled checkout par jao.</div>
+            <div class="d-grid gap-2 mb-3">
+              {% for address in saved_addresses %}
+              <a href="{% url 'checkout_cart' %}?address_id={{ address.id }}" class="cc-mini-address-link">
+                <strong>{{ address.label }}</strong>
+                <span>{{ address.full_name }} | {{ address.phone_number }}</span>
+                <span>{{ address.address_line }}, {{ address.city }}</span>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          <a href="{% url 'checkout_cart' %}" class="btn btn-primary w-100" id="ccCheckoutLink">Proceed to Checkout</a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="alert alert-light border" id="ccCartEmptyState">Your cart is empty.</div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  (function () {
+    const cartContent = document.getElementById("ccCartContent");
+    const cartTotal = document.getElementById("ccCartTotal");
+    const checkoutLink = document.getElementById("ccCheckoutLink");
+    const showToast = window.ccShowToast || function () {};
+    const setCartBadge = window.ccSetCartBadge || function () {};
+    const playAddTone = window.ccPlayAddTone || function () {};
+    const playRemoveTone = window.ccPlayRemoveTone || function () {};
+    let checkoutPrefetched = false;
+
+    const showEmptyState = () => {
+      cartContent.innerHTML = '<div class="alert alert-light border" id="ccCartEmptyState">Your cart is empty.</div>';
+    };
+
+    const requestCartChange = async (button, url, onSuccess, soundType) => {
+      if (!url || button.dataset.loading === "true") return;
+      button.dataset.loading = "true";
+      button.disabled = true;
+      button.classList.add("is-loading");
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.message || "Cart update failed.");
+        }
+        onSuccess(data);
+        setCartBadge(data.cart_count || 0);
+        if (data.message) showToast(data.message, "success");
+        if (soundType === "add") {
+          playAddTone();
+        } else if (soundType === "remove") {
+          playRemoveTone();
+        }
+      } catch (error) {
+        showToast(error.message || "Something went wrong", "error");
+      } finally {
+        button.dataset.loading = "false";
+        button.disabled = false;
+        button.classList.remove("is-loading");
+      }
+    };
+
+    document.addEventListener("click", (event) => {
+      const removeButton = event.target.closest(".cc-remove-cart-btn");
+      if (removeButton) {
+        const row = removeButton.closest(".cc-cart-row");
+        requestCartChange(removeButton, removeButton.dataset.cartUrl, (data) => {
+          if (row) row.remove();
+          if (cartTotal) cartTotal.textContent = "Rs. " + data.cart_total;
+          if (data.cart_empty) {
+            showEmptyState();
+          }
+        }, "remove");
+        return;
+      }
+
+      const qtyButton = event.target.closest(".cc-qty-btn");
+      if (!qtyButton) return;
+      const row = qtyButton.closest(".cc-cart-row");
+      const qtyEl = row ? row.querySelector("[data-qty]") : null;
+      const lineTotalEl = row ? row.querySelector("[data-line-total]") : null;
+      const action = qtyButton.dataset.cartAction;
+      requestCartChange(qtyButton, qtyButton.dataset.cartUrl, (data) => {
+        if (data.quantity <= 0) {
+          if (row) row.remove();
+        } else {
+          if (qtyEl) qtyEl.textContent = data.quantity;
+          if (lineTotalEl) lineTotalEl.textContent = "Rs. " + data.line_total;
+        }
+        if (cartTotal) cartTotal.textContent = "Rs. " + data.cart_total;
+        if (data.cart_empty) {
+          showEmptyState();
+        }
+      }, action === "increase" ? "add" : "remove");
+    });
+
+    const prefetchCheckout = () => {
+      if (!checkoutLink || checkoutPrefetched) return;
+      checkoutPrefetched = true;
+      fetch(checkoutLink.href, {
+        method: "GET",
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      }).catch(() => {});
+    };
+
+    if (checkoutLink) {
+      checkoutLink.addEventListener("pointerenter", prefetchCheckout, { passive: true });
+      checkoutLink.addEventListener("touchstart", prefetchCheckout, { passive: true });
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(prefetchCheckout, { timeout: 1200 });
+      } else {
+        setTimeout(prefetchCheckout, 900);
+      }
+    }
+
+    const drawerToggle = document.getElementById("ccDrawerToggle");
+    const drawer = document.getElementById("ccMiniCheckoutDrawer");
+    if (drawerToggle && drawer) {
+      drawerToggle.addEventListener("click", () => {
+        const isHidden = drawer.hasAttribute("hidden");
+        if (isHidden) {
+          drawer.removeAttribute("hidden");
+          drawerToggle.textContent = "Hide Saved Addresses";
+        } else {
+          drawer.setAttribute("hidden", "hidden");
+          drawerToggle.textContent = "Quick Checkout with Saved Address";
+        }
+      });
+    }
+  })();
+</script>
+<style>
+  .cc-mini-checkout-drawer {
+    border-top: 1px solid var(--cc-border);
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+  .cc-mini-address-link {
+    display: block;
+    text-decoration: none;
+    color: var(--cc-text);
+    padding: 12px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,248,239,.98));
+    border: 1px solid var(--cc-border);
+    box-shadow: 0 10px 18px rgba(76, 41, 22, 0.06);
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  }
+  .cc-mini-address-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 22px rgba(76, 41, 22, 0.1);
+    border-color: color-mix(in srgb, var(--cc-primary) 20%, white 80%);
+  }
+  .cc-mini-address-link strong,
+  .cc-mini-address-link span {
+    display: block;
+  }
+  .cc-mini-address-link span {
+    color: var(--cc-muted);
+    font-size: .85rem;
+    margin-top: 2px;
+  }
+</style>
+{% endblock %}

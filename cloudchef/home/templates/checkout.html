@@ -1,0 +1,225 @@
+{% extends "utils/base.html" %}
+
+{% block start %}
+{{ saved_addresses_json|json_script:"saved-addresses-data" }}
+<div class="container py-5">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card p-4 cc-soft">
+        <h3 class="mb-3 cc-panel-title">Checkout</h3>
+        <div class="mb-4">
+          <p class="mb-1"><strong>Dish:</strong> {{ dish.name }}</p>
+          <p class="mb-1"><strong>Chef:</strong> {{ dish.chef.chef_name }}</p>
+          <p class="mb-0"><strong>Price:</strong> Rs. {{ dish.price }}</p>
+        </div>
+
+        <form method="POST" id="checkoutSingleForm">
+          {% csrf_token %}
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <label class="form-label mb-0">Saved Address</label>
+              <button type="button" class="btn btn-sm btn-outline-danger" id="ccUseNewAddress">Add New Address</button>
+            </div>
+            <div class="cc-address-list">
+              {% for address in saved_addresses %}
+              <label class="cc-address-card {% if address_form.selected_address_id|stringformat:'s' == address.id|stringformat:'s' %}is-selected{% endif %}">
+                <input type="radio" name="selected_address_id" value="{{ address.id }}" {% if address_form.selected_address_id|stringformat:'s' == address.id|stringformat:'s' %}checked{% endif %}>
+                <span>
+                  <strong>{{ address.label }}</strong>
+                  <small>{{ address.full_name }} | {{ address.phone_number }}</small>
+                  <small>{{ address.address_line }}, {{ address.city }}, {{ address.state }} - {{ address.pincode }}</small>
+                </span>
+              </label>
+              {% empty %}
+              <div class="text-muted small">Abhi koi saved address nahi hai. Naya address add karo.</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Label</label>
+              <input type="text" name="label" id="id_label" class="form-control" value="{{ address_form.label }}">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Full Name</label>
+              <input type="text" name="full_name" id="id_full_name" class="form-control" value="{{ address_form.full_name }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone Number</label>
+              <input type="text" name="phone_number" id="id_phone_number" class="form-control" value="{{ address_form.phone_number }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Pincode</label>
+              <input type="text" name="pincode" id="id_pincode" class="form-control" value="{{ address_form.pincode }}" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Address Line</label>
+              <input type="text" name="address_line" id="id_address_line" class="form-control" value="{{ address_form.address_line }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Landmark</label>
+              <input type="text" name="landmark" id="id_landmark" class="form-control" value="{{ address_form.landmark }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">City</label>
+              <input type="text" name="city" id="id_city" class="form-control" value="{{ address_form.city }}" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">State</label>
+              <input type="text" name="state" id="id_state" class="form-control" value="{{ address_form.state }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Quantity</label>
+              <input type="number" name="quantity" class="form-control" min="1" value="1" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Payment Method</label>
+              <select name="payment_method" class="form-select" required>
+                <option value="COD">Cash on Delivery</option>
+                <option value="UPI">UPI</option>
+                <option value="CARD">Card</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="save_address" id="id_save_address" {% if address_form.save_address %}checked{% endif %}>
+                <label class="form-check-label" for="id_save_address">Save this address for next time</label>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 mt-4">Place Order</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card p-4 cc-soft h-100">
+        <h4 class="mb-3 cc-panel-title">Delivery Location Preview</h4>
+        <div class="ratio ratio-4x3 rounded overflow-hidden mb-3">
+          <iframe id="ccAddressMap" src="about:blank" data-fallback-src="{{ route_map_url }}" style="border:0;" allowfullscreen loading="lazy"></iframe>
+        </div>
+        <div class="cc-connect-box">
+          <h5 class="mb-2">Selected Address</h5>
+          <p class="mb-0 text-muted" id="ccAddressPreview">Address select ya type karte hi preview yahan dikh jayega.</p>
+        </div>
+        <div class="cc-distance-box mt-3">
+          <div class="small text-muted">Chef Location</div>
+          <div class="fw-bold mb-2">{{ chef_location }}</div>
+          <div class="small text-muted">Approx distance</div>
+          <div class="fw-bold" id="ccDistanceValue">Select address to view distance</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const savedAddresses = JSON.parse(document.getElementById("saved-addresses-data").textContent || "[]");
+    const mapFrame = document.getElementById("ccAddressMap");
+    const addressPreview = document.getElementById("ccAddressPreview");
+    const distanceValue = document.getElementById("ccDistanceValue");
+    const chefLocation = "{{ chef_location|escapejs }}";
+    const newAddressBtn = document.getElementById("ccUseNewAddress");
+    const fields = {
+      label: document.getElementById("id_label"),
+      full_name: document.getElementById("id_full_name"),
+      phone_number: document.getElementById("id_phone_number"),
+      address_line: document.getElementById("id_address_line"),
+      landmark: document.getElementById("id_landmark"),
+      city: document.getElementById("id_city"),
+      state: document.getElementById("id_state"),
+      pincode: document.getElementById("id_pincode")
+    };
+
+    let updateTimer = null;
+    const buildEmbedUrl = (query) => "https://maps.google.com/maps?q=" + encodeURIComponent(query) + "&t=&z=13&ie=UTF8&iwloc=&output=embed";
+    const getAddressQuery = () => [fields.address_line.value, fields.landmark.value, fields.city.value, fields.state.value, fields.pincode.value]
+      .filter(Boolean)
+      .join(", ");
+    const clearPreview = () => {
+      addressPreview.textContent = "Address select ya type karte hi preview yahan dikh jayega.";
+      if (distanceValue) distanceValue.textContent = "Select address to view distance";
+      if (mapFrame) mapFrame.src = "about:blank";
+    };
+    const updateMap = async () => {
+      const query = getAddressQuery();
+      if (!query) {
+        clearPreview();
+        return;
+      }
+      addressPreview.textContent = query;
+      if (mapFrame) {
+        mapFrame.src = buildEmbedUrl(query);
+      }
+      if (distanceValue) {
+        distanceValue.textContent = "Calculating...";
+        try {
+          const response = await fetch("/distance-preview/?origin=" + encodeURIComponent(chefLocation) + "&destination=" + encodeURIComponent(query));
+          const data = await response.json();
+          if (data.ok && data.route_map_url) {
+            mapFrame.src = data.route_map_url;
+            distanceValue.textContent = data.distance_km ? data.distance_km + " km away" : "Distance unavailable";
+          } else {
+            distanceValue.textContent = "Distance unavailable";
+          }
+        } catch (error) {
+          distanceValue.textContent = "Distance unavailable";
+        }
+      }
+    };
+
+    const queueMapUpdate = () => {
+      clearTimeout(updateTimer);
+      updateTimer = setTimeout(updateMap, 350);
+    };
+
+    Object.values(fields).forEach((field) => {
+      field.addEventListener("input", queueMapUpdate);
+    });
+
+    document.querySelectorAll(".cc-address-card input[type='radio']").forEach((radio) => {
+      radio.addEventListener("change", () => {
+        const match = savedAddresses.find((item) => String(item.id) === radio.value);
+        if (!match) return;
+        Object.keys(fields).forEach((key) => {
+          fields[key].value = match[key] || "";
+        });
+        document.querySelectorAll(".cc-address-card").forEach((card) => card.classList.remove("is-selected"));
+        radio.closest(".cc-address-card").classList.add("is-selected");
+        queueMapUpdate();
+      });
+    });
+
+    const initiallySelected = document.querySelector(".cc-address-card input[type='radio']:checked");
+    if (initiallySelected) {
+      const match = savedAddresses.find((item) => String(item.id) === initiallySelected.value);
+      if (match) {
+        Object.keys(fields).forEach((key) => {
+          fields[key].value = match[key] || "";
+        });
+        queueMapUpdate();
+      }
+    }
+
+    if (newAddressBtn) {
+      newAddressBtn.addEventListener("click", () => {
+        document.querySelectorAll(".cc-address-card input[type='radio']").forEach((radio) => {
+          radio.checked = false;
+          radio.closest(".cc-address-card").classList.remove("is-selected");
+        });
+        fields.label.value = "Home";
+        fields.full_name.value = "";
+        fields.phone_number.value = "";
+        fields.address_line.value = "";
+        fields.landmark.value = "";
+        fields.city.value = "";
+        fields.state.value = "";
+        fields.pincode.value = "";
+        clearPreview();
+      });
+    }
+  })();
+</script>
+{% endblock %}

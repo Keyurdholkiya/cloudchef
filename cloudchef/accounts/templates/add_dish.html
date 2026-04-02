@@ -1,0 +1,195 @@
+{% extends "utils/base.html" %}
+
+{% block start %}
+<style>
+  .chef-dish-bg {
+    min-height: calc(100vh - 140px);
+    background:
+      linear-gradient(rgba(24, 28, 40, 0.55), rgba(24, 28, 40, 0.55)),
+      url("https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=1600&q=80") center/cover no-repeat;
+    padding: 42px 16px;
+  }
+  .glass-card {
+    max-width: 980px;
+    margin: 0 auto;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+    padding: 28px;
+    color: #f4f6fb;
+  }
+  .chef-title {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+  .chef-title h2 {
+    font-size: 44px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .upload-box {
+    border: 1.5px dashed rgba(255, 255, 255, 0.5);
+    border-radius: 18px;
+    min-height: 210px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+  }
+  .preview-img {
+    width: 100%;
+    border-radius: 18px;
+    object-fit: cover;
+    height: 210px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+  }
+  .chef-input, .chef-select, .chef-textarea {
+    background: rgba(255, 255, 255, 0.88);
+    border: 0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: #223;
+  }
+  .chef-textarea { min-height: 130px; }
+  .chef-label {
+    color: #f4f6fb;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .food-switch {
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 999px;
+    display: inline-flex;
+    padding: 4px;
+    gap: 4px;
+  }
+  .food-switch input { display: none; }
+  .food-pill {
+    border-radius: 999px;
+    padding: 8px 22px;
+    font-weight: 700;
+    color: #334;
+    cursor: pointer;
+  }
+  .food-switch input:checked + .food-pill.veg {
+    background: linear-gradient(135deg, #2ca23f, #1a7c2d);
+    color: white;
+  }
+  .food-switch input:checked + .food-pill.nonveg {
+    background: linear-gradient(135deg, #c0492a, #961c0f);
+    color: white;
+  }
+  .dish-submit {
+    width: 320px;
+    max-width: 100%;
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 38px;
+    font-weight: 800;
+    padding: 10px 24px;
+    margin: 8px auto 0;
+    display: block;
+    background: linear-gradient(90deg, #ff8e1a, #ff4b2b);
+    box-shadow: 0 10px 22px rgba(255, 87, 34, 0.45);
+  }
+  @media (max-width: 768px) {
+    .chef-title h2 { font-size: 34px; }
+    .glass-card { padding: 18px; }
+    .dish-submit { font-size: 28px; }
+  }
+</style>
+
+<section class="chef-dish-bg">
+  <div class="chef-title">
+    <h2>Add New Dish</h2>
+    <p class="mb-0">Fill the details of your new dish.</p>
+  </div>
+
+  <div class="glass-card">
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="is_available" value="on">
+      <div class="row g-4 align-items-start">
+        <div class="col-md-6">
+          <label class="chef-label">Upload Photo</label>
+          <label for="dish-image" class="upload-box" id="upload-placeholder">
+            Click to upload dish image
+          </label>
+          <input id="dish-image" type="file" name="image" accept="image/*" hidden>
+        </div>
+        <div class="col-md-6">
+          <img id="image-preview" class="preview-img d-none" alt="Dish preview">
+          <div id="preview-empty" class="upload-box">Preview will appear here</div>
+        </div>
+
+        <div class="col-12">
+          <label class="chef-label">Dish Name</label>
+          <input type="text" name="name" class="form-control chef-input" placeholder="e.g. Paneer Butter Masala" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="chef-label">Category</label>
+          <select name="category" class="form-select chef-select">
+            <option value="veg">Veg</option>
+            <option value="non-veg">Non-Veg</option>
+            <option value="snacks">Snacks</option>
+            <option value="dessert">Dessert</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="chef-label">Price (in Rs)</label>
+          <input type="number" name="price" class="form-control chef-input" min="1" step="0.01" placeholder="250" required>
+        </div>
+
+        <div class="col-12">
+          <label class="chef-label">Description</label>
+          <textarea name="description" class="form-control chef-textarea" placeholder="Write a brief description about the dish..."></textarea>
+        </div>
+
+        <div class="col-12">
+          <label class="chef-label d-block mb-2">Food Type</label>
+          <div class="food-switch">
+            <input type="radio" name="food_type" id="food-veg" value="veg" checked>
+            <label for="food-veg" class="food-pill veg">Veg</label>
+            <input type="radio" name="food_type" id="food-nonveg" value="non-veg">
+            <label for="food-nonveg" class="food-pill nonveg">Non-Veg</label>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <button type="submit" class="dish-submit">Add Dish</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<script>
+  (function() {
+    const input = document.getElementById("dish-image");
+    const preview = document.getElementById("image-preview");
+    const empty = document.getElementById("preview-empty");
+    const uploadPlaceholder = document.getElementById("upload-placeholder");
+
+    input.addEventListener("change", function() {
+      const file = this.files && this.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        preview.src = e.target.result;
+        preview.classList.remove("d-none");
+        empty.classList.add("d-none");
+        uploadPlaceholder.textContent = "Change Image";
+      };
+      reader.readAsDataURL(file);
+    });
+  })();
+</script>
+{% endblock %}

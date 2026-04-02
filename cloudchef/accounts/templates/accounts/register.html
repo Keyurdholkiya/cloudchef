@@ -1,0 +1,43 @@
+{% extends "utils/base.html" %}
+
+{% block start %}
+<div class="container py-4 py-md-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-11 col-md-8 col-lg-5 col-xl-4">
+            <div class="card shadow p-3 p-sm-4 cc-auth-card border-0">
+                <h3 class="text-center mb-2">Create Account</h3>
+                <p class="text-muted text-center small mb-3">Naya account banao aur Cloud Chef use karna start karo.</p>
+                <hr>
+                <form method="POST" class="cc-auth-form">
+                    {% include "alerts.html" %}
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email address</label>
+                        <input type="email" name="email" class="form-control" value="{{ prefill_email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" name="phone_number" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <p class="small mb-3">Already have an account? <a href="/accounts/login/">Login</a></p>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Create Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

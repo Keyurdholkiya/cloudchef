@@ -1,0 +1,196 @@
+{% extends "utils/base.html" %}
+
+{% block start %}
+<div class="container py-5">
+  <div class="cc-settings-hero mb-4">
+    <div>
+      <span class="cc-kicker">Personalize Cloud Chef</span>
+      <h2 class="mb-2">Your Settings Studio</h2>
+      <p class="mb-0 text-muted">Profile update karo, apni favorite website style select karo, aur experience ko bilkul apne taste jaisa banao.</p>
+    </div>
+    <div class="cc-settings-chip">10 live themes</div>
+  </div>
+
+  <div class="cc-settings-tabs mb-4" id="ccSettingsTabs">
+    <button type="button" class="cc-settings-tab is-active" data-settings-tab="profile">Profile</button>
+    <button type="button" class="cc-settings-tab" data-settings-tab="theme">Website Color</button>
+    <button type="button" class="cc-settings-tab" data-settings-tab="sound">Sound Theme</button>
+    <button type="button" class="cc-settings-tab" data-settings-tab="notifications">Notifications</button>
+    <button type="button" class="cc-settings-tab" data-settings-tab="account">Account</button>
+  </div>
+
+  <div class="cc-settings-panels">
+    <section class="cc-settings-panel is-active" data-settings-panel="profile">
+      <div class="card p-4 cc-soft">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h3 class="mb-1 cc-panel-title">Customer Profile</h3>
+            <p class="mb-0 text-muted">Apni basic details update karo, taaki order aur delivery flow smooth rahe.</p>
+          </div>
+          <span class="cc-theme-badge">Profile</span>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="profile">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">First Name</label>
+              <input type="text" name="first_name" class="form-control" value="{{ request.user.first_name }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Last Name</label>
+              <input type="text" name="last_name" class="form-control" value="{{ request.user.last_name }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" value="{{ request.user.email }}" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone</label>
+              <input type="text" name="phone_number" class="form-control" value="{{ request.user.phone_number }}">
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary">Save Profile</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="cc-settings-panel" data-settings-panel="theme">
+      <div class="card p-4 cc-soft">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h4 class="mb-1 cc-panel-title">Website Look & Theme</h4>
+            <p class="mb-0 text-muted">Light, bold, cozy, luxury ya modern. Jo pasand ho wahi choose karo.</p>
+          </div>
+          <span class="cc-theme-badge">{{ current_theme|title }}</span>
+        </div>
+        <form method="post" class="cc-theme-auto-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="theme">
+          <div class="cc-theme-grid">
+            {% for theme_value, theme_label, theme_desc in theme_options %}
+            <label class="cc-theme-option" for="theme-{{ theme_value }}">
+              <input type="radio" id="theme-{{ theme_value }}" name="theme" value="{{ theme_value }}" {% if current_theme == theme_value %}checked{% endif %} onchange="this.form.submit()">
+              <span class="cc-theme-card theme-preview-{{ theme_value }}">
+                <span class="cc-theme-preview">
+                  <span class="cc-theme-preview-top"></span>
+                  <span class="cc-theme-preview-body">
+                    <span class="cc-theme-preview-block lg"></span>
+                    <span class="cc-theme-preview-row">
+                      <span class="cc-theme-preview-block"></span>
+                      <span class="cc-theme-preview-block alt"></span>
+                    </span>
+                  </span>
+                </span>
+                <span class="cc-theme-meta">
+                  <strong>{{ theme_label }}</strong>
+                  <small>{{ theme_desc }}</small>
+                </span>
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="mt-4 d-flex flex-wrap gap-2">
+            <span class="text-muted align-self-center">Kisi bhi theme card par click karte hi website ka look turant change ho jayega.</span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="cc-settings-panel" data-settings-panel="sound">
+      <div class="card p-4 cc-soft">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h4 class="mb-1 cc-panel-title">Notification Sound Theme</h4>
+            <p class="mb-0 text-muted">10 different sound styles me se apna favorite choose karo.</p>
+          </div>
+          <span class="cc-theme-badge">{{ current_sound_theme|title }}</span>
+        </div>
+        <form method="post" class="cc-theme-auto-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="sound">
+          <div class="cc-theme-grid">
+            {% for sound_value, sound_label, sound_desc in sound_options %}
+            <label class="cc-theme-option" for="sound-{{ sound_value }}">
+              <input type="radio" id="sound-{{ sound_value }}" name="sound_theme" value="{{ sound_value }}" {% if current_sound_theme == sound_value %}checked{% endif %} onchange="this.form.submit()">
+              <span class="cc-theme-card">
+                <span class="cc-theme-meta">
+                  <strong>{{ sound_label }}</strong>
+                  <small>{{ sound_desc }}</small>
+                </span>
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="mt-3">
+            <span class="text-muted">Sound change save hote hi agle popup aur cart actions me naya tone use hoga.</span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="cc-settings-panel" data-settings-panel="notifications">
+      <div class="card p-4 cc-soft">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h4 class="mb-1 cc-panel-title">Daily Food Reminders</h4>
+            <p class="text-muted mb-0">Din me 2 baar sweet reminder milega jaise: "Aaj ka khana khaya?"</p>
+          </div>
+          <span class="cc-theme-badge">{% if request.user.notification_enabled %}On{% else %}Off{% endif %}</span>
+        </div>
+        <form method="post" class="mb-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="notifications">
+          <label class="cc-notify-toggle">
+            <input type="checkbox" name="notification_enabled" {% if request.user.notification_enabled %}checked{% endif %} onchange="this.form.submit()">
+            <span class="cc-notify-slider"></span>
+            <span class="cc-notify-copy">
+              <strong>Meal Reminder Notifications</strong>
+              <small>Browser aur website par attractive reminder popup show hoga.</small>
+            </span>
+          </label>
+        </form>
+        <div class="cc-connect-box mb-4">
+          <h5 class="mb-2">Free Notification Mode</h5>
+          <p class="mb-0 text-muted">Website popup, browser/device notification aur in-site reminders free mode me active rahenge. Real SMS/automatic WhatsApp delivery ke liye paid provider ki zarurat hoti hai.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="cc-settings-panel" data-settings-panel="account">
+      <div class="card p-4 cc-soft">
+        <h4 class="mb-3 cc-panel-title">Account</h4>
+        <p class="text-muted mb-3">Shared device use kar rahe ho to logout zarur karo.</p>
+        <div class="cc-connect-box mb-4">
+          <h5 class="mb-2">Quick Access</h5>
+          <p class="mb-0 text-muted">Yahan se aap safely logout kar sakte ho. Future me yahin privacy aur security options bhi aa sakte hain.</p>
+        </div>
+        <a href="{% url 'logout_user' %}" class="btn btn-outline-danger">Logout</a>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const tabs = document.querySelectorAll("[data-settings-tab]");
+    const panels = document.querySelectorAll("[data-settings-panel]");
+    if (!tabs.length || !panels.length) return;
+
+    const activatePanel = (target) => {
+      tabs.forEach((tab) => {
+        tab.classList.toggle("is-active", tab.dataset.settingsTab === target);
+      });
+      panels.forEach((panel) => {
+        panel.classList.toggle("is-active", panel.dataset.settingsPanel === target);
+      });
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => activatePanel(tab.dataset.settingsTab));
+    });
+  })();
+</script>
+{% endblock %}

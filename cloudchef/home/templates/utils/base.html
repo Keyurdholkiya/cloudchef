@@ -5,26 +5,1169 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Brigade Homemade</title>
+    <title>Cloud Chef</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
   </head>
-  <body>
+  <body class="theme-{{ site_theme|default:'light' }} {% block body_class %}{% endblock %}">
 
     {% include "utils/navbar.html" %}
 
+    {% if messages %}
+    <div class="cc-hidden-messages" hidden>
+      {% for message in messages %}
+      <div
+        class="cc-inline-message"
+        data-level="{% if message.tags %}{{ message.tags }}{% else %}success{% endif %}"
+      >{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {{ pending_notifications|json_script:"cc-pending-notifications" }}
+
+    {% if theme_toast %}
+    <div class="cc-theme-toast" id="ccThemeToast">{{ theme_toast }}</div>
+    {% endif %}
+    <div class="cc-action-toast" id="ccActionToast">
+      <button type="button" class="cc-action-toast-close" id="ccActionToastClose">x</button>
+      <div class="cc-action-toast-content" id="ccActionToastContent"></div>
+    </div>
+    <div class="cc-reminder-pop" id="ccReminderPop" aria-live="polite">
+      <button type="button" class="cc-reminder-close" id="ccReminderClose">x</button>
+      <div class="cc-reminder-icon">!</div>
+      <div class="cc-reminder-content">
+        <div class="cc-reminder-label">Cloud Chef Reminder</div>
+        <div class="cc-reminder-title" id="ccReminderTitle">Meal time</div>
+        <p class="mb-0" id="ccReminderText">Aaj kuch homemade aur tasty try karte hain.</p>
+      </div>
+    </div>
+    <div class="cc-ai-guide" id="ccAiGuide">
+      <button type="button" class="cc-ai-guide-toggle" id="ccAiGuideToggle" aria-label="Cloud Chef Guide">
+        <span class="cc-ai-guide-bot">
+          <span class="cc-ai-bot-shell">
+            <span class="cc-ai-bot-antenna"></span>
+            <span class="cc-ai-bot-head">
+              <span class="cc-ai-bot-eye"></span>
+              <span class="cc-ai-bot-eye"></span>
+              <span class="cc-ai-bot-mouth"></span>
+            </span>
+          </span>
+        </span>
+      </button>
+      <div class="cc-ai-quick-float" id="ccAiQuickFloat" hidden>
+        <button type="button" class="cc-ai-quick-chip" data-ai-quick="Aaj kya khaun?">Aaj kya khaun?</button>
+        <button type="button" class="cc-ai-quick-chip" data-ai-quick="Kuch tasty suggest karo">Tasty</button>
+        <button type="button" class="cc-ai-quick-chip" data-ai-quick="Budget 200 me best bolo">Budget 200</button>
+      </div>
+      <div class="cc-ai-guide-card" id="ccAiGuideCard">
+        <div class="cc-ai-guide-head">
+          <div class="cc-ai-guide-head-copy">
+            <div class="cc-ai-guide-avatar">
+              <span class="cc-ai-bot-shell is-mini">
+                <span class="cc-ai-bot-antenna"></span>
+                <span class="cc-ai-bot-head">
+                  <span class="cc-ai-bot-eye"></span>
+                  <span class="cc-ai-bot-eye"></span>
+                  <span class="cc-ai-bot-mouth"></span>
+                </span>
+              </span>
+            </div>
+            <div>
+              <strong>Cloud Chef Assistant</strong>
+              <small>Smart food guide for this page</small>
+            </div>
+          </div>
+          <button type="button" class="cc-ai-guide-close" id="ccAiGuideClose">x</button>
+        </div>
+        <div class="cc-ai-guide-body">
+          <div class="cc-ai-chat-log" id="ccAiGuideBody"></div>
+          <div class="cc-ai-suggestions" id="ccAiSuggestions"></div>
+          <form class="cc-ai-input-row" id="ccAiGuideForm" data-async-form="true">
+            <input type="text" id="ccAiGuideInput" class="cc-ai-input" placeholder="Mujhe kuch spicy ya light khana suggest karo..." autocomplete="off">
+            <button type="submit" class="cc-ai-send">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% if cart_count > 0 %}
+    <button type="button" class="cc-floating-cart" id="ccFloatingCart" aria-label="Open cart drawer">
+      <span class="cc-floating-cart-icon"><i class="fa fa-shopping-cart" aria-hidden="true"></i></span>
+      <span class="cc-floating-cart-copy">
+        <strong>Cart</strong>
+        <small>{{ cart_count }} item{{ cart_count|pluralize }}</small>
+      </span>
+    </button>
+    {% endif %}
+    <div class="cc-floating-cart-drawer" id="ccFloatingCartDrawer" hidden>
+      <div class="cc-floating-cart-drawer-card">
+        <div class="cc-floating-cart-drawer-head">
+          <div>
+            <strong>Your cart</strong>
+            <small id="ccFloatingCartDrawerCount">{{ cart_count }} item{{ cart_count|pluralize }}</small>
+          </div>
+          <button type="button" class="cc-floating-cart-close" id="ccFloatingCartClose">x</button>
+        </div>
+        <p class="mb-3">Cart ready hai. Ab directly cart ya checkout par ja sakte ho.</p>
+        {% if mini_cart_items %}
+        <div class="cc-floating-cart-mini-list">
+          {% for item in mini_cart_items %}
+          <div class="cc-floating-cart-mini-item">
+            {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.name }}">
+            {% else %}
+            <span class="cc-floating-cart-mini-thumb">🍽</span>
+            {% endif %}
+            <div class="cc-floating-cart-mini-copy">
+              <strong>{{ item.name }}</strong>
+              <small>{{ item.quantity }} x Rs. {{ item.price }}</small>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div class="cc-floating-cart-actions">
+          <a href="{% url 'cart_page' %}" class="btn btn-outline-danger">Open Cart</a>
+          <a href="{% url 'checkout_cart' %}" class="btn btn-primary">Checkout</a>
+        </div>
+      </div>
+    </div>
+
+    <nav class="cc-bottom-nav" aria-label="Mobile navigation">
+      <a href="{% url 'index' %}" class="cc-bottom-nav-item">
+        <i class="fa fa-home" aria-hidden="true"></i>
+        <span>Home</span>
+      </a>
+      <a href="{% url 'shop' %}" class="cc-bottom-nav-item">
+        <i class="fa fa-cutlery" aria-hidden="true"></i>
+        <span>Shop</span>
+      </a>
+      <a href="{% url 'cart_page' %}" class="cc-bottom-nav-item position-relative">
+        <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+        <span>Cart</span>
+        {% if cart_count > 0 %}
+        <span class="cc-bottom-nav-badge" id="ccBottomCartBadge">{{ cart_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{% url 'past_orders' %}" class="cc-bottom-nav-item">
+        <i class="fa fa-shopping-bag" aria-hidden="true"></i>
+        <span>Orders</span>
+      </a>
+      <a href="{% url 'customer_settings' %}" class="cc-bottom-nav-item">
+        <i class="fa fa-user-circle-o" aria-hidden="true"></i>
+        <span>Account</span>
+      </a>
+    </nav>
+
    {% block start %}
    {% endblock  %}
-
-
-
-   <div class="bg-dark p-5 mt-5">
-    <p class="text-center text-white">brigade homemade</p>
-   </div>
+   <footer class="cc-footer mt-5">
+    <div class="container py-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+      <p class="mb-0">Cloud Chef | Homemade food with trust</p>
+      <p class="mb-0 text-secondary-emphasis">Healthy. Hyperlocal. Human.</p>
+    </div>
+   </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+      (function () {
+        const isChefMode = document.body.classList.contains("cc-chef-mode");
+        const currentUrl = new URL(window.location.href);
+        document.addEventListener("click", (event) => {
+          const link = event.target.closest("a[href]");
+          if (!link) return;
+          const href = link.getAttribute("href");
+          if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+          try {
+            const linkUrl = new URL(link.href, window.location.origin);
+            const samePath = linkUrl.pathname === currentUrl.pathname;
+            const sameQuery = linkUrl.search === currentUrl.search;
+            const sameHash = (linkUrl.hash || "") === (currentUrl.hash || "");
+            if (samePath && sameQuery && sameHash) {
+              event.preventDefault();
+            }
+          } catch (error) {}
+        }, { passive: false });
+
+        document.querySelectorAll(".cc-bottom-nav-item").forEach((item) => {
+          try {
+            const itemUrl = new URL(item.href, window.location.origin);
+            const currentPathname = window.location.pathname.replace(/\/+$/, "") || "/";
+            const itemPathname = itemUrl.pathname.replace(/\/+$/, "") || "/";
+            if (currentPathname === itemPathname) {
+              item.classList.add("is-active");
+            }
+          } catch (error) {}
+        });
+
+        document.querySelectorAll("[data-chef-switch='true']").forEach((link) => {
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            document.body.classList.add("cc-chef-switching");
+            window.setTimeout(() => {
+              window.location.href = link.href;
+            }, 260);
+          });
+        });
+
+        if (!isChefMode) {
+          document.querySelectorAll(".cc-reveal, .cc-stagger").forEach((el) => {
+            el.classList.add("is-visible");
+          });
+        }
+
+        const themeToast = document.getElementById("ccThemeToast");
+        if (themeToast) {
+          setTimeout(() => {
+            themeToast.classList.add("is-visible");
+          }, 20);
+          setTimeout(() => {
+            themeToast.classList.remove("is-visible");
+          }, 2600);
+        }
+
+        const actionToast = document.getElementById("ccActionToast");
+        const actionToastContent = document.getElementById("ccActionToastContent");
+        const actionToastClose = document.getElementById("ccActionToastClose");
+        const reminderPop = document.getElementById("ccReminderPop");
+        const reminderClose = document.getElementById("ccReminderClose");
+        const reminderTitle = document.getElementById("ccReminderTitle");
+        const reminderText = document.getElementById("ccReminderText");
+        let actionToastTimer = null;
+        const showActionToast = (message, level = "success") => {
+          if (!actionToast || !message) return;
+          actionToast.classList.remove("is-success", "is-warning", "is-error", "is-info");
+          if (level.includes("error") || level.includes("danger")) {
+            actionToast.classList.add("is-error");
+          } else if (level.includes("warning")) {
+            actionToast.classList.add("is-warning");
+          } else if (level.includes("info")) {
+            actionToast.classList.add("is-info");
+          } else {
+            actionToast.classList.add("is-success");
+          }
+          if (actionToastContent) {
+            actionToastContent.textContent = message;
+          }
+          actionToast.classList.add("is-visible");
+          clearTimeout(actionToastTimer);
+          actionToastTimer = setTimeout(() => {
+            actionToast.classList.remove("is-visible");
+          }, 2200);
+        };
+
+        if (actionToastClose) {
+          actionToastClose.addEventListener("click", () => {
+            actionToast.classList.remove("is-visible");
+          });
+        }
+
+        const inlineMessages = Array.from(document.querySelectorAll(".cc-inline-message"));
+        const selectedSoundTheme = "{{ sound_theme|default:'classic'|escapejs }}";
+        const soundProfiles = {
+          classic: {
+            add: { notes: [587.33, 739.99, 880], type: "triangle", volume: 0.18 },
+            remove: { notes: [440, 349.23, 261.63], type: "sawtooth", volume: 0.16 },
+            success: { notes: [659.25, 880, 987.77], type: "triangle", volume: 0.14 },
+            warning: { notes: [466.16, 392], type: "square", volume: 0.14 },
+            error: { notes: [349.23, 293.66, 246.94], type: "sawtooth", volume: 0.15 },
+            notify: { notes: [523.25, 659.25, 783.99, 1046.5], type: "square", volume: 0.16 },
+            reminder: { notes: [523.25, 659.25], type: "sine", volume: 0.12 }
+          },
+          spice: {
+            add: { notes: [659.25, 830.61, 987.77], type: "square", volume: 0.18 },
+            remove: { notes: [392, 329.63, 261.63], type: "square", volume: 0.16 },
+            success: { notes: [783.99, 987.77, 1174.66], type: "triangle", volume: 0.15 },
+            warning: { notes: [523.25, 466.16], type: "sawtooth", volume: 0.14 },
+            error: { notes: [311.13, 261.63, 220], type: "sawtooth", volume: 0.15 },
+            notify: { notes: [659.25, 880, 987.77, 1318.51], type: "square", volume: 0.16 },
+            reminder: { notes: [587.33, 783.99], type: "triangle", volume: 0.12 }
+          },
+          soft: {
+            add: { notes: [523.25, 659.25, 783.99], type: "sine", volume: 0.12 },
+            remove: { notes: [392, 349.23, 293.66], type: "sine", volume: 0.11 },
+            success: { notes: [587.33, 739.99, 880], type: "sine", volume: 0.12 },
+            warning: { notes: [440, 392], type: "triangle", volume: 0.11 },
+            error: { notes: [329.63, 293.66, 261.63], type: "sine", volume: 0.12 },
+            notify: { notes: [440, 587.33, 659.25], type: "triangle", volume: 0.12 },
+            reminder: { notes: [493.88, 659.25], type: "sine", volume: 0.1 }
+          },
+          royal: {
+            add: { notes: [698.46, 880, 1046.5], type: "triangle", volume: 0.18 },
+            remove: { notes: [523.25, 392, 293.66], type: "square", volume: 0.15 },
+            success: { notes: [783.99, 1046.5, 1318.51], type: "triangle", volume: 0.16 },
+            warning: { notes: [523.25, 440], type: "square", volume: 0.14 },
+            error: { notes: [392, 329.63, 261.63], type: "sawtooth", volume: 0.15 },
+            notify: { notes: [659.25, 783.99, 1046.5, 1318.51], type: "triangle", volume: 0.17 },
+            reminder: { notes: [587.33, 739.99], type: "triangle", volume: 0.11 }
+          },
+          mint: {
+            add: { notes: [523.25, 698.46, 830.61], type: "triangle", volume: 0.15 },
+            remove: { notes: [392, 329.63, 261.63], type: "triangle", volume: 0.13 },
+            success: { notes: [659.25, 830.61, 987.77], type: "triangle", volume: 0.14 },
+            warning: { notes: [493.88, 440], type: "triangle", volume: 0.12 },
+            error: { notes: [349.23, 293.66, 261.63], type: "triangle", volume: 0.13 },
+            notify: { notes: [587.33, 783.99, 987.77], type: "triangle", volume: 0.14 },
+            reminder: { notes: [523.25, 587.33], type: "sine", volume: 0.1 }
+          },
+          sunset: {
+            add: { notes: [587.33, 698.46, 880], type: "sawtooth", volume: 0.17 },
+            remove: { notes: [440, 369.99, 293.66], type: "sine", volume: 0.13 },
+            success: { notes: [698.46, 880, 1046.5], type: "sawtooth", volume: 0.15 },
+            warning: { notes: [466.16, 415.3], type: "square", volume: 0.13 },
+            error: { notes: [329.63, 277.18, 233.08], type: "sawtooth", volume: 0.15 },
+            notify: { notes: [523.25, 698.46, 880, 987.77], type: "triangle", volume: 0.15 },
+            reminder: { notes: [440, 587.33], type: "sine", volume: 0.1 }
+          },
+          neon: {
+            add: { notes: [783.99, 987.77, 1318.51], type: "square", volume: 0.18 },
+            remove: { notes: [523.25, 392, 261.63], type: "square", volume: 0.15 },
+            success: { notes: [880, 1174.66, 1396.91], type: "square", volume: 0.15 },
+            warning: { notes: [587.33, 523.25], type: "square", volume: 0.14 },
+            error: { notes: [415.3, 311.13, 246.94], type: "square", volume: 0.15 },
+            notify: { notes: [659.25, 987.77, 1318.51, 1567.98], type: "square", volume: 0.16 },
+            reminder: { notes: [659.25, 880], type: "triangle", volume: 0.1 }
+          },
+          lofi: {
+            add: { notes: [493.88, 587.33, 659.25], type: "sine", volume: 0.12 },
+            remove: { notes: [392, 349.23, 311.13], type: "sine", volume: 0.11 },
+            success: { notes: [523.25, 659.25, 783.99], type: "sine", volume: 0.12 },
+            warning: { notes: [415.3, 369.99], type: "triangle", volume: 0.11 },
+            error: { notes: [293.66, 261.63, 220], type: "sine", volume: 0.12 },
+            notify: { notes: [440, 523.25, 659.25], type: "triangle", volume: 0.12 },
+            reminder: { notes: [392, 523.25], type: "sine", volume: 0.09 }
+          },
+          glass: {
+            add: { notes: [698.46, 880, 1174.66], type: "triangle", volume: 0.14 },
+            remove: { notes: [523.25, 415.3, 311.13], type: "triangle", volume: 0.12 },
+            success: { notes: [783.99, 987.77, 1318.51], type: "triangle", volume: 0.14 },
+            warning: { notes: [523.25, 466.16], type: "triangle", volume: 0.12 },
+            error: { notes: [349.23, 311.13, 261.63], type: "triangle", volume: 0.12 },
+            notify: { notes: [587.33, 783.99, 1046.5], type: "triangle", volume: 0.14 },
+            reminder: { notes: [523.25, 783.99], type: "triangle", volume: 0.1 }
+          },
+          drum: {
+            add: { notes: [261.63, 392, 523.25], type: "square", volume: 0.18 },
+            remove: { notes: [261.63, 220, 196], type: "square", volume: 0.16 },
+            success: { notes: [329.63, 493.88, 659.25], type: "square", volume: 0.16 },
+            warning: { notes: [246.94, 220], type: "square", volume: 0.14 },
+            error: { notes: [220, 196, 174.61], type: "sawtooth", volume: 0.15 },
+            notify: { notes: [329.63, 493.88, 659.25, 783.99], type: "square", volume: 0.17 },
+            reminder: { notes: [261.63, 392], type: "triangle", volume: 0.11 }
+          }
+        };
+
+        let ccAudioContext = null;
+        const getAudioContext = () => {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return null;
+          if (!ccAudioContext) {
+            ccAudioContext = new AudioContextClass();
+          }
+          if (ccAudioContext.state === "suspended") {
+            ccAudioContext.resume().catch(() => {});
+          }
+          return ccAudioContext;
+        };
+
+        document.addEventListener("pointerdown", () => {
+          getAudioContext();
+        }, { once: true, passive: true });
+
+        const playToneSequence = (notes, options = {}) => {
+          try {
+            const context = getAudioContext();
+            if (!context) return;
+            notes.forEach((frequency, index) => {
+              const oscillator = context.createOscillator();
+              const gain = context.createGain();
+              oscillator.type = options.type || (index % 2 === 0 ? "square" : "triangle");
+              oscillator.frequency.value = frequency;
+              const startAt = context.currentTime + index * (options.gap || 0.16);
+              gain.gain.setValueAtTime(0.0001, startAt);
+              gain.gain.exponentialRampToValueAtTime(options.volume || 0.16, startAt + 0.02);
+              gain.gain.exponentialRampToValueAtTime(0.0001, startAt + (options.duration || 0.3));
+              oscillator.connect(gain);
+              gain.connect(context.destination);
+              oscillator.start(startAt);
+              oscillator.stop(startAt + ((options.duration || 0.3) + 0.04));
+            });
+          } catch (error) {
+            console.warn("Notification tone unavailable", error);
+          }
+        };
+
+        const getSoundProfile = (kind) => {
+          const profile = soundProfiles[selectedSoundTheme] || soundProfiles.classic;
+          return profile[kind] || soundProfiles.classic[kind];
+        };
+
+        const playCloudChefTone = () => {
+          const tone = getSoundProfile("notify");
+          playToneSequence(tone.notes, { volume: tone.volume, gap: 0.16, duration: 0.3, type: tone.type });
+        };
+        const playAddToCartTone = () => {
+          const tone = getSoundProfile("add");
+          playToneSequence(tone.notes, { volume: tone.volume, gap: 0.11, duration: 0.22, type: tone.type });
+        };
+        const playRemoveTone = () => {
+          const tone = getSoundProfile("remove");
+          playToneSequence(tone.notes, { volume: tone.volume, gap: 0.12, duration: 0.22, type: tone.type });
+        };
+        const playSuccessTone = () => {
+          const tone = getSoundProfile("success");
+          playToneSequence(tone.notes, { volume: tone.volume, gap: 0.1, duration: 0.2, type: tone.type });
+        };
+        const playWarningTone = () => {
+          const tone = getSoundProfile("warning");
+          playToneSequence(tone.notes, { volume: tone.volume, gap: 0.15, duration: 0.24, type: tone.type });
+        };
+        const playErrorTone = () => {
+          const tone = getSoundProfile("error");
+          playToneSequence(tone.notes, { volume: tone.volume, gap: 0.12, duration: 0.24, type: tone.type });
+        };
+        const playReminderTone = () => {
+          const tone = getSoundProfile("reminder");
+          playToneSequence(tone.notes, { volume: tone.volume, gap: 0.16, duration: 0.26, type: tone.type });
+        };
+
+        const playToastTone = (level = "success") => {
+          if (level.includes("error") || level.includes("danger")) {
+            playErrorTone();
+          } else if (level.includes("warning")) {
+            playWarningTone();
+          } else if (level.includes("info")) {
+            playCloudChefTone();
+          } else {
+            playSuccessTone();
+          }
+        };
+
+        if (inlineMessages.length) {
+          inlineMessages.forEach((node, index) => {
+            setTimeout(() => {
+              const level = node.dataset.level || "success";
+              showActionToast(node.textContent.trim(), level);
+              playToastTone(level);
+            }, 400 + (index * 2400));
+          });
+        }
+
+        const liveChannel = ("BroadcastChannel" in window) ? new BroadcastChannel("cloudchef-live") : null;
+        const seenLiveNotifications = new Set();
+        const notifyBadgePeers = (type, payload) => {
+          try {
+            const envelope = { type, payload, ts: Date.now() };
+            if (liveChannel) {
+              liveChannel.postMessage(envelope);
+            }
+            localStorage.setItem("cc-live-sync", JSON.stringify(envelope));
+          } catch (error) {}
+        };
+
+        const setFloatingCart = (count) => {
+          let floatingCart = document.getElementById("ccFloatingCart");
+          const drawerCount = document.getElementById("ccFloatingCartDrawerCount");
+          let bottomBadge = document.getElementById("ccBottomCartBadge");
+          const bottomCartItem = document.querySelector(".cc-bottom-nav-item[href$='cart/'], .cc-bottom-nav-item[href*='cart']");
+          if (!count || count <= 0) {
+            if (floatingCart) {
+              floatingCart.remove();
+            }
+            if (drawerCount) {
+              drawerCount.textContent = "0 items";
+            }
+            if (bottomBadge) {
+              bottomBadge.remove();
+            }
+            return;
+          }
+          if (!floatingCart) {
+            floatingCart = document.createElement("button");
+            floatingCart.id = "ccFloatingCart";
+            floatingCart.className = "cc-floating-cart";
+            floatingCart.type = "button";
+            floatingCart.setAttribute("aria-label", "Open cart drawer");
+            floatingCart.innerHTML = '<span class="cc-floating-cart-icon"><i class="fa fa-shopping-cart" aria-hidden="true"></i></span><span class="cc-floating-cart-copy"><strong>Cart</strong><small></small></span>';
+            document.body.appendChild(floatingCart);
+            bindFloatingCart();
+          }
+          const small = floatingCart.querySelector("small");
+          if (small) {
+            small.textContent = `${count} item${count === 1 ? "" : "s"}`;
+          }
+          if (drawerCount) {
+            drawerCount.textContent = `${count} item${count === 1 ? "" : "s"}`;
+          }
+          if (bottomCartItem && !bottomBadge) {
+            bottomBadge = document.createElement("span");
+            bottomBadge.className = "cc-bottom-nav-badge";
+            bottomBadge.id = "ccBottomCartBadge";
+            bottomCartItem.appendChild(bottomBadge);
+          }
+          if (bottomBadge) {
+            bottomBadge.textContent = count;
+          }
+        };
+
+        const setCartBadge = (count, options = {}) => {
+          const cartButton = document.getElementById("ccCartButton");
+          if (!cartButton) return;
+          let badge = document.getElementById("ccCartBadge");
+          if (!badge) {
+            badge = document.createElement("span");
+            badge.id = "ccCartBadge";
+            badge.className = "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark";
+            cartButton.appendChild(badge);
+          }
+          badge.textContent = count;
+          badge.style.display = count > 0 ? "inline-block" : "none";
+          setFloatingCart(count);
+          if (!options.silent) {
+            notifyBadgePeers("cart", { count });
+          }
+        };
+
+        const setNotificationBadge = (count, options = {}) => {
+          const bellButton = document.getElementById("ccNotifBell");
+          if (!bellButton) return;
+          let badge = document.getElementById("ccNotifBadge");
+          if (!badge) {
+            badge = document.createElement("span");
+            badge.id = "ccNotifBadge";
+            badge.className = "position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark";
+            bellButton.appendChild(badge);
+          }
+          badge.textContent = count;
+          badge.style.display = count > 0 ? "inline-block" : "none";
+          if (!options.silent) {
+            notifyBadgePeers("notifications", { count });
+          }
+        };
+
+        const handlePendingNotifications = (items) => {
+          if (!Array.isArray(items) || !items.length) return;
+          items.forEach((item, index) => {
+            const uniqueKey = String(item.id || "") + "::" + String(item.title || "") + "::" + String(item.message || "");
+            if (seenLiveNotifications.has(uniqueKey)) return;
+            seenLiveNotifications.add(uniqueKey);
+            window.setTimeout(() => {
+              showActionToast((item.title ? item.title + ": " : "") + item.message, item.level || "info");
+              playCloudChefTone();
+              if (notificationsEnabled) {
+                triggerDeviceNotification(item.title || "Cloud Chef", item.message);
+              }
+            }, index * 280);
+          });
+        };
+
+        document.addEventListener("click", async (event) => {
+          const button = event.target.closest(".cc-add-to-cart-btn");
+          if (!button) return;
+          event.preventDefault();
+          if (button.dataset.loading === "true") return;
+          button.dataset.loading = "true";
+          button.classList.add("is-loading");
+          const originalText = button.textContent;
+          button.textContent = "Adding...";
+
+          try {
+            const response = await fetch(button.dataset.cartUrl || button.href, {
+              method: "GET",
+              headers: {
+                "X-Requested-With": "XMLHttpRequest"
+              }
+            });
+            const data = await response.json();
+            if (!response.ok || !data.ok) {
+              throw new Error(data.message || "Unable to add item.");
+            }
+            setCartBadge(data.cart_count || 0);
+            showActionToast(data.message || "Added to cart");
+            playAddToCartTone();
+          } catch (error) {
+            showActionToast(error.message || "Something went wrong");
+          } finally {
+            button.dataset.loading = "false";
+            button.classList.remove("is-loading");
+            button.textContent = originalText;
+          }
+        });
+
+        document.addEventListener("submit", (event) => {
+          const form = event.target;
+          if (!form || form.tagName !== "FORM") return;
+          if (form.dataset.asyncForm === "true") {
+            return;
+          }
+          if (form.dataset.submitting === "true") {
+            event.preventDefault();
+            return;
+          }
+          form.dataset.submitting = "true";
+          const submitter = form.querySelector("button[type='submit'], input[type='submit']");
+          if (submitter) {
+            submitter.disabled = true;
+            submitter.classList.add("is-loading");
+          }
+        });
+
+        const notificationsEnabled = {% if notifications_enabled %}true{% else %}false{% endif %};
+        const reminderMessages = {
+          morning: [
+            { title: "Aaj ka khana khaya?", text: "Healthy homemade meal ke liye Cloud Chef par fresh options ready hain." },
+            { title: "Lunch time yaad hai?", text: "Ghar jaisa khana choose karo aur aaj ka meal skip mat karo." }
+          ],
+          evening: [
+            { title: "Aaj kuch alag taste karte hain", text: "Dinner ke liye ek naya homemade dish try karne ka perfect time hai." },
+            { title: "Shaam ka meal ready?", text: "Aaj ki thakan ko ghar ke khane se better banao." }
+          ]
+        };
+
+        const showReminder = (payload) => {
+          if (!reminderPop || !payload) return;
+          reminderTitle.textContent = payload.title;
+          reminderText.textContent = payload.text;
+          reminderPop.classList.add("is-visible");
+          setTimeout(() => reminderPop.classList.remove("is-visible"), 7000);
+          playReminderTone();
+
+          if ("Notification" in window) {
+            if (Notification.permission === "granted") {
+              new Notification(payload.title, { body: payload.text });
+            } else if (Notification.permission === "default") {
+              Notification.requestPermission().then((permission) => {
+                if (permission === "granted") {
+                  new Notification(payload.title, { body: payload.text });
+                }
+              });
+            }
+          }
+        };
+
+        const triggerDeviceNotification = (title, message) => {
+          if (!("Notification" in window)) return;
+          if (Notification.permission === "granted") {
+            new Notification(title, { body: message });
+          } else if (Notification.permission === "default") {
+            Notification.requestPermission().then((permission) => {
+              if (permission === "granted") {
+                new Notification(title, { body: message });
+              }
+            });
+          }
+        };
+
+        window.ccShowToast = showActionToast;
+        window.ccSetCartBadge = setCartBadge;
+        window.ccSetNotificationBadge = setNotificationBadge;
+        window.ccPlayAddTone = playAddToCartTone;
+        window.ccPlayRemoveTone = playRemoveTone;
+        window.ccPlayNotificationTone = playCloudChefTone;
+        window.ccPlaySuccessTone = playSuccessTone;
+        window.ccPlayWarningTone = playWarningTone;
+        window.ccPlayErrorTone = playErrorTone;
+        window.ccTriggerDeviceNotification = triggerDeviceNotification;
+
+        const pendingNotificationsNode = document.getElementById("cc-pending-notifications");
+        if (pendingNotificationsNode) {
+          try {
+            const pendingNotifications = JSON.parse(pendingNotificationsNode.textContent || "[]");
+            setTimeout(() => handlePendingNotifications(pendingNotifications), 900);
+          } catch (error) {
+            console.warn("Pending notifications unavailable", error);
+          }
+        }
+
+        const processLiveEnvelope = (envelope) => {
+          if (!envelope || !envelope.type) return;
+          if (envelope.type === "cart" && envelope.payload) {
+            setCartBadge(Number(envelope.payload.count || 0), { silent: true });
+          }
+          if (envelope.type === "notifications" && envelope.payload) {
+            setNotificationBadge(Number(envelope.payload.count || 0), { silent: true });
+          }
+        };
+
+        if (liveChannel) {
+          liveChannel.addEventListener("message", (event) => {
+            processLiveEnvelope(event.data);
+          });
+        }
+
+        window.addEventListener("storage", (event) => {
+          if (event.key !== "cc-live-sync" || !event.newValue) return;
+          try {
+            processLiveEnvelope(JSON.parse(event.newValue));
+          } catch (error) {}
+        });
+
+        const syncLiveState = async () => {
+          try {
+            const response = await fetch("{% url 'live_state' %}", {
+              headers: { "X-Requested-With": "XMLHttpRequest" }
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            if (!data || !data.ok) return;
+            setCartBadge(Number(data.cart_count || 0));
+            setNotificationBadge(Number(data.unread_notification_count || 0));
+            handlePendingNotifications(data.pending_notifications || []);
+          } catch (error) {}
+        };
+        window.setInterval(syncLiveState, 10000);
+        window.setTimeout(syncLiveState, 1400);
+
+        const floatingCart = document.getElementById("ccFloatingCart");
+        const floatingCartDrawer = document.getElementById("ccFloatingCartDrawer");
+        const floatingCartClose = document.getElementById("ccFloatingCartClose");
+        const bindFloatingCart = () => {
+          const button = document.getElementById("ccFloatingCart");
+          if (!button || !floatingCartDrawer || button.dataset.bound === "1") return;
+          button.dataset.bound = "1";
+          button.addEventListener("click", () => {
+            floatingCartDrawer.hidden = !floatingCartDrawer.hidden;
+            floatingCartDrawer.classList.toggle("is-visible", !floatingCartDrawer.hidden);
+          });
+        };
+        bindFloatingCart();
+        if (floatingCartClose && floatingCartDrawer) {
+          floatingCartClose.addEventListener("click", () => {
+            floatingCartDrawer.hidden = true;
+            floatingCartDrawer.classList.remove("is-visible");
+          });
+        }
+
+        if (reminderClose) {
+          reminderClose.addEventListener("click", () => {
+            reminderPop.classList.remove("is-visible");
+          });
+        }
+
+        if (notificationsEnabled) {
+          const now = new Date();
+          const hour = now.getHours();
+          const slot = hour < 15 ? "morning" : "evening";
+          const todayKey = now.toISOString().slice(0, 10) + "-" + slot;
+          const reminderStoreKey = "cc-reminder-last-shown";
+          const lastShown = localStorage.getItem(reminderStoreKey);
+          if (lastShown !== todayKey) {
+            const choices = reminderMessages[slot];
+            const message = choices[Math.floor(Math.random() * choices.length)];
+            setTimeout(() => showReminder(message), 1800);
+            localStorage.setItem(reminderStoreKey, todayKey);
+          }
+        }
+
+        const aiGuideToggle = document.getElementById("ccAiGuideToggle");
+        const aiGuideClose = document.getElementById("ccAiGuideClose");
+        const aiGuideCard = document.getElementById("ccAiGuideCard");
+        const aiGuideHead = document.querySelector(".cc-ai-guide-head");
+        const aiGuideBody = document.getElementById("ccAiGuideBody");
+        const aiGuideForm = document.getElementById("ccAiGuideForm");
+        const aiGuideInput = document.getElementById("ccAiGuideInput");
+        const aiSuggestions = document.getElementById("ccAiSuggestions");
+        const aiQuickFloat = document.getElementById("ccAiQuickFloat");
+        const currentPath = window.location.pathname;
+        let aiInitialized = false;
+
+        const quickPrompts = [
+          "Aaj kya khaun?",
+          "Kuch tasty suggest karo",
+          "Light dinner suggest karo",
+          "Budget 200 me best bolo"
+        ];
+
+        const assistantState = {
+          mood: "",
+          cuisine: "",
+          meal: "",
+          budget: "",
+          taste: "",
+          lastDishHints: [],
+          promptsHidden: false,
+          isReplying: false,
+        };
+
+        const addAiMessage = (text, role = "assistant") => {
+          if (!aiGuideBody || !text) return;
+          const bubble = document.createElement("div");
+          bubble.className = "cc-ai-message " + (role === "user" ? "is-user" : "is-assistant");
+          bubble.textContent = text;
+          aiGuideBody.appendChild(bubble);
+          aiGuideBody.scrollTop = aiGuideBody.scrollHeight;
+        };
+
+        const renderPrompts = () => {
+          if (!aiSuggestions) return;
+          aiSuggestions.innerHTML = "";
+          if (assistantState.promptsHidden) {
+            aiSuggestions.hidden = true;
+            return;
+          }
+          aiSuggestions.hidden = false;
+          quickPrompts.forEach((prompt) => {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "cc-ai-chip";
+            chip.textContent = prompt;
+            chip.addEventListener("click", () => {
+              if (aiGuideInput) aiGuideInput.value = prompt;
+              handleAiPrompt(prompt);
+            });
+            aiSuggestions.appendChild(chip);
+          });
+        };
+
+        const hidePrompts = () => {
+          assistantState.promptsHidden = true;
+          if (aiSuggestions) {
+            aiSuggestions.hidden = true;
+            aiSuggestions.innerHTML = "";
+          }
+        };
+
+        const getVisibleDishNames = () => {
+          const selectors = [
+            ".cc-product-card .card-title",
+            ".cc-shop-card .card-title",
+            ".dish-card .card-title",
+            ".dish-name",
+            "[data-dish-name]"
+          ];
+          const names = [];
+          selectors.forEach((selector) => {
+            document.querySelectorAll(selector).forEach((node) => {
+              const text = (node.dataset && node.dataset.dishName) ? node.dataset.dishName : node.textContent;
+              const clean = (text || "").trim();
+              if (clean && !names.includes(clean)) {
+                names.push(clean);
+              }
+            });
+          });
+          return names.slice(0, 6);
+        };
+
+        const pickDishSuggestion = () => {
+          const visible = getVisibleDishNames();
+          assistantState.lastDishHints = visible;
+          if (!visible.length) return "";
+          if (visible.length === 1) return visible[0];
+          return visible.slice(0, 3).join(", ");
+        };
+
+        const detectMood = (text) => {
+          const lower = text.toLowerCase();
+          if (lower.includes("spicy") || lower.includes("masala") || lower.includes("chatpata")) return "spicy";
+          if (lower.includes("light") || lower.includes("healthy") || lower.includes("simple")) return "light";
+          if (lower.includes("sweet") || lower.includes("dessert")) return "sweet";
+          if (lower.includes("comfort") || lower.includes("ghar")) return "comfort";
+          return "";
+        };
+
+        const detectMeal = (text) => {
+          const lower = text.toLowerCase();
+          if (lower.includes("breakfast")) return "breakfast";
+          if (lower.includes("lunch")) return "lunch";
+          if (lower.includes("dinner")) return "dinner";
+          if (lower.includes("snack")) return "snack";
+          return "";
+        };
+
+        const detectBudget = (text) => {
+          const match = text.match(/(\d{2,4})/);
+          return match ? match[1] : "";
+        };
+
+        const detectTaste = (text) => {
+          const lower = text.toLowerCase();
+          if (lower.includes("crispy") || lower.includes("crunchy")) return "crispy";
+          if (lower.includes("gravy") || lower.includes("curry")) return "gravy";
+          if (lower.includes("snack")) return "snack";
+          if (lower.includes("healthy")) return "healthy";
+          return "";
+        };
+
+        const detectCuisine = (text) => {
+          const lower = text.toLowerCase();
+          if (lower.includes("punjabi") || lower.includes("north indian")) return "north-indian";
+          if (lower.includes("south indian") || lower.includes("dosa") || lower.includes("idli")) return "south-indian";
+          if (lower.includes("chinese") || lower.includes("noodle") || lower.includes("fried rice")) return "indo-chinese";
+          if (lower.includes("snack") || lower.includes("chaat")) return "snack";
+          if (lower.includes("ghar ka") || lower.includes("homemade")) return "homemade";
+          return "";
+        };
+
+        const buildDishAwareSuggestion = () => {
+          const suggested = pickDishSuggestion();
+          if (!suggested) return "";
+          return `Abhi jo visible options lag rahe hain unme ${suggested} dekhne layak hai. Agar chaho to main bata sakti hoon unmein se kaunsa spicy, light, ya budget-friendly lagega.`;
+        };
+
+        const getContextIntro = () => {
+          if (currentPath.startsWith("/shop/")) {
+            return "Shop page par main aapko taste aur budget ke hisaab se dish shortlist karne me help kar sakti hoon.";
+          }
+          if (currentPath.startsWith("/cart/")) {
+            return "Cart page par main help kar sakti hoon decide karne me ki current order light rakho ya proper full meal banao.";
+          }
+          if (currentPath.startsWith("/accounts/chef-side/")) {
+            return "Chef panel me main dish, orders, aur earnings ko jaldi samajhne me help kar sakti hoon.";
+          }
+          return "Main aapke saath natural way me food choose kar sakti hoon. Aap bas simple likho ki aaj kya khane ka mood ya taste hai.";
+        };
+
+        const buildReply = (text) => {
+          const lower = text.toLowerCase();
+          const mood = detectMood(text);
+          const meal = detectMeal(text);
+          const budget = detectBudget(text);
+          const taste = detectTaste(text);
+          const cuisine = detectCuisine(text);
+          if (mood) assistantState.mood = mood;
+          if (meal) assistantState.meal = meal;
+          if (budget) assistantState.budget = budget;
+          if (taste) assistantState.taste = taste;
+          if (cuisine) assistantState.cuisine = cuisine;
+
+          if (currentPath.startsWith("/accounts/chef-side/")) {
+            if (lower.includes("dish") || lower.includes("add")) {
+              return "Chef side me aap Add New Dish se dish create karo, uska live time set karo, aur My Dishes se usko kabhi bhi manage kar sakte ho.";
+            }
+            if (lower.includes("earning") || lower.includes("order")) {
+              return "Orders aur Earnings dono left menu me mil jayenge. Wahan se aap sales, analytics aur live activity easily dekh sakte ho.";
+            }
+            return "Main yahan chef panel me aapke saath hoon. Aap dish, orders, earnings ya profile me se jo chaho puch sakte ho.";
+          }
+
+          if (currentPath.startsWith("/cart/")) {
+            return "Cart me quantity plus-minus se adjust kar lo. Agar chaho to main bata sakti hoon ki light meal better rahega ya proper full meal combo.";
+          }
+
+          if (currentPath.startsWith("/shop/")) {
+            if (lower.includes("empty") || lower.includes("koi dish nahi")) {
+              return "Abhi shop intentionally empty rakha gaya hai. Jaise hi chef live dish add karega, woh yahan dikh jayegi.";
+            }
+            const contextualSuggestion = buildDishAwareSuggestion();
+            if (contextualSuggestion) {
+              if (lower.includes("best") || lower.includes("recommend") || lower.includes("suggest")) {
+                return contextualSuggestion;
+              }
+            }
+          }
+
+          if (lower.includes("bhook") || lower.includes("hungry") || lower.includes("bahut bhook")) {
+            return "Agar aapko kaafi bhook lagi hai, to proper full meal best rahega. Aap batao gravy type pasand hai, spicy, ya simple ghar-jaisa khana?";
+          }
+
+          if (assistantState.cuisine === "north-indian") {
+            return "North Indian mood me ho to rich gravy, roti combo, ya ek proper homemade main course best rahega. Thoda spicy chahiye ya family-style balanced taste?";
+          }
+          if (assistantState.cuisine === "south-indian") {
+            return "South Indian side ka mood ho to light aur satisfying option best rahega. Breakfast type chahiye ya dinner ke liye kuch halka aur filling?";
+          }
+          if (assistantState.cuisine === "indo-chinese") {
+            return "Indo-Chinese craving ho to thoda chatpata aur street-style taste achha rahega. Aapko noodles side pasand hai ya rice bowl type?";
+          }
+
+          if (assistantState.taste === "crispy") {
+            return "Aapka taste crispy side par lag raha hai. To snack style dish, crunchy starter, ya light fried homemade option best rahega. Chai ke saath chahiye ya proper meal se pehle?";
+          }
+          if (assistantState.taste === "gravy") {
+            return "Agar gravy type khana pasand hai, to curry based homemade dish best rahegi. Uske saath roti combo chahiye ya rice combo?";
+          }
+          if (assistantState.taste === "healthy") {
+            return "Healthy option ke liye low-oil, simple sabzi-roti, dal-rice, ya light homemade meal best rahega. Main aapke liye lunch ya dinner ke hisaab se bhi narrow kar sakti hoon.";
+          }
+
+          if (assistantState.mood === "spicy") {
+            return "Aaj spicy mood hai, nice. Mere hisaab se chatpata curry, masala main course, ya crunchy spicy snack best rahega. Agar aap bolo to main isko lunch, dinner, ya budget ke hisaab se aur exact kar deti hoon.";
+          }
+          if (assistantState.mood === "light") {
+            return "Theek hai, aap kuch halka chahte ho. To simple homemade meal, low-oil sabzi-roti, ya soft comfort dish kaafi achhi rahegi. Ye lunch ke liye soch rahe ho ya dinner ke liye?";
+          }
+          if (assistantState.mood === "sweet") {
+            return "Lag raha hai aaj aapka sweet side active hai. Dessert, meetha snack, ya meal ke baad kuch soft sweet option perfect rahega. Kya aapko heavy sweet chahiye ya halka meetha?";
+          }
+          if (assistantState.mood === "comfort") {
+            return "Comfort food mood me ho to ghar-jaisa dal-chawal, roti-sabzi, ya soft curry meal bahut soothing rahega. Agar din thoda tiring gaya hai to simple homemade combo sabse accha rahega.";
+          }
+          if (assistantState.meal === "breakfast") {
+            return "Breakfast ke liye kuch light but filling best rahega, jaise poha, sandwich, paratha, ya simple homemade snack plate. Aapko quick breakfast chahiye ya thoda filling?";
+          }
+          if (assistantState.meal === "lunch") {
+            return "Lunch ke liye ek proper balanced meal best rahega, jaise roti-sabzi, dal-rice, ya main-course curry combo. Agar office-style lunch chahiye ho to main us hisaab se bhi suggest kar sakti hoon.";
+          }
+          if (assistantState.meal === "dinner") {
+            return "Dinner ke liye main aapko 3 smart directions de sakti hoon: light, spicy, ya comfort. Bas bolo aaj stomach ko halka rakhna hai ya thoda tasty and rich khana hai.";
+          }
+          if (assistantState.budget) {
+            return `Theek hai, ${assistantState.budget} ke around budget me main value-for-money homemade options soch rahi hoon. Aapko spicy, light, ya comfort type me se kya zyada pasand hai?`;
+          }
+          if (lower.includes("hello") || lower.includes("hi") || lower.includes("hey")) {
+            return "Hi, main Cloud Chef Assistant hoon. Aap bilkul normal tarike se batao aaj kya khane ka mann hai. Main aapko options shortlist karne me help kar dungi.";
+          }
+          if (lower.includes("kya khaun") || lower.includes("suggest") || lower.includes("kya khana")) {
+            const contextualSuggestion = buildDishAwareSuggestion();
+            if (contextualSuggestion) {
+              return contextualSuggestion;
+            }
+            return "Chalo quickly decide karte hain. Aapko abhi kuch spicy chahiye, halka khana, ya proper full meal? Agar chahe to budget bhi bata sakte ho.";
+          }
+          return "Main aapke saath food choose kar sakti hoon, bilkul friend ki tarah. Aap simple likho ki aaj kya khane ka mann hai, kis type ka taste chahiye, kis cuisine ka mood hai, ya kitna budget rakhna hai.";
+        };
+
+        const handleAiPrompt = (text) => {
+          const clean = (text || "").trim();
+          if (!clean || assistantState.isReplying) return;
+          assistantState.isReplying = true;
+          hidePrompts();
+          addAiMessage(clean, "user");
+          if (aiGuideInput) aiGuideInput.value = "";
+          const submitButton = aiGuideForm ? aiGuideForm.querySelector("button[type='submit']") : null;
+          if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = "Typing...";
+          }
+          let typingBubble = null;
+          if (aiGuideBody) {
+            typingBubble = document.createElement("div");
+            typingBubble.className = "cc-ai-message is-assistant";
+            typingBubble.innerHTML = '<span class="cc-ai-typing"><span></span><span></span><span></span></span>';
+            aiGuideBody.appendChild(typingBubble);
+            aiGuideBody.scrollTop = aiGuideBody.scrollHeight;
+          }
+          window.setTimeout(() => {
+            if (typingBubble) typingBubble.remove();
+            addAiMessage(buildReply(clean), "assistant");
+            assistantState.isReplying = false;
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.textContent = "Send";
+            }
+            if (aiGuideInput) {
+              aiGuideInput.focus();
+            }
+          }, 360);
+        };
+
+        const initializeAiAssistant = () => {
+          if (aiInitialized) return;
+          aiInitialized = true;
+          if (aiGuideBody) {
+            addAiMessage(getContextIntro(), "assistant");
+          }
+          renderPrompts();
+          if (aiQuickFloat) {
+            aiQuickFloat.hidden = false;
+          }
+        };
+
+        const setAiQuickFloatVisibility = () => {
+          if (!aiQuickFloat || !aiGuideCard) return;
+          aiQuickFloat.hidden = aiGuideCard.classList.contains("is-open");
+        };
+
+        let aiDragStartY = 0;
+        let aiDragOffset = 0;
+        let aiDragging = false;
+        let aiSheetMode = "half";
+        const startAiSheetDrag = (clientY) => {
+          if (!aiGuideCard || window.innerWidth > 767.98 || !aiGuideCard.classList.contains("is-open")) return;
+          aiDragging = true;
+          aiDragStartY = clientY;
+          aiDragOffset = 0;
+          aiGuideCard.classList.add("is-dragging");
+        };
+        const moveAiSheetDrag = (clientY) => {
+          if (!aiDragging || !aiGuideCard) return;
+          aiDragOffset = Math.max(0, clientY - aiDragStartY);
+          aiGuideCard.style.transform = `translateY(${aiDragOffset}px)`;
+        };
+        const endAiSheetDrag = () => {
+          if (!aiDragging || !aiGuideCard) return;
+          aiDragging = false;
+          aiGuideCard.classList.remove("is-dragging");
+          if (aiDragOffset > 120) {
+            aiGuideCard.classList.remove("is-open");
+            aiGuideCard.classList.remove("is-expanded");
+            aiSheetMode = "half";
+          } else if (aiDragOffset < -40) {
+            aiGuideCard.classList.add("is-expanded");
+            aiSheetMode = "full";
+          } else if (aiSheetMode === "full" && aiDragOffset > 40) {
+            aiGuideCard.classList.remove("is-expanded");
+            aiSheetMode = "half";
+          }
+          aiGuideCard.style.transform = "";
+        };
+
+        if (aiGuideForm) {
+          aiGuideForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            initializeAiAssistant();
+            handleAiPrompt(aiGuideInput ? aiGuideInput.value : "");
+          });
+        }
+
+        if (aiGuideToggle && aiGuideCard) {
+          aiGuideToggle.addEventListener("click", () => {
+            aiGuideCard.classList.toggle("is-open");
+            if (aiGuideCard.classList.contains("is-open") && aiGuideInput) {
+              aiGuideCard.classList.remove("is-expanded");
+              aiSheetMode = "half";
+              initializeAiAssistant();
+              setTimeout(() => aiGuideInput.focus(), 120);
+            }
+            setAiQuickFloatVisibility();
+          });
+        }
+        if (aiGuideClose && aiGuideCard) {
+          aiGuideClose.addEventListener("click", () => {
+            aiGuideCard.classList.remove("is-open");
+            aiGuideCard.classList.remove("is-expanded");
+            aiSheetMode = "half";
+            setAiQuickFloatVisibility();
+          });
+        }
+        if (aiQuickFloat) {
+          aiQuickFloat.addEventListener("click", (event) => {
+            const chip = event.target.closest("[data-ai-quick]");
+            if (!chip) return;
+            const prompt = chip.getAttribute("data-ai-quick") || "";
+            initializeAiAssistant();
+            aiGuideCard.classList.add("is-open");
+            aiGuideCard.classList.remove("is-expanded");
+            aiSheetMode = "half";
+            setAiQuickFloatVisibility();
+            handleAiPrompt(prompt);
+          });
+        }
+        if (aiGuideHead) {
+          aiGuideHead.addEventListener("touchstart", (event) => {
+            const touch = event.touches && event.touches[0];
+            if (touch) startAiSheetDrag(touch.clientY);
+          }, { passive: true });
+          aiGuideHead.addEventListener("touchmove", (event) => {
+            const touch = event.touches && event.touches[0];
+            if (touch) {
+              const delta = touch.clientY - aiDragStartY;
+              aiDragOffset = delta;
+              aiGuideCard.style.transform = `translateY(${delta}px)`;
+            }
+          }, { passive: true });
+          aiGuideHead.addEventListener("touchend", endAiSheetDrag);
+          aiGuideHead.addEventListener("dblclick", () => {
+            if (!aiGuideCard.classList.contains("is-open")) return;
+            aiGuideCard.classList.toggle("is-expanded");
+            aiSheetMode = aiGuideCard.classList.contains("is-expanded") ? "full" : "half";
+          });
+        }
+        setAiQuickFloatVisibility();
+      })();
+    </script>
   </body>
 </html>

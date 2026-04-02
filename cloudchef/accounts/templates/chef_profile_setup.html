@@ -1,11 +1,13 @@
 {% extends "utils/base.html" %}
 
 {% block start %}
-<div class="container mt-5">
-    <div class="col-6 mx-auto card shadow-lg p-4">
+<div class="container py-4 py-md-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-11 col-md-9 col-lg-7 col-xl-6">
+            <div class="card shadow-lg p-3 p-sm-4 border-0 cc-auth-card">
         <h2 class="text-center">Complete Your Chef Profile</h2>
         <hr>
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" enctype="multipart/form-data" action="{% url 'chef_profile_setup' %}">
             {% csrf_token %}
             
             <div class="mb-3">
@@ -19,8 +21,36 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Location</label>
-                <input type="text" name="location" class="form-control" required>
+                <label class="form-label">Kitchen Address Line</label>
+                <input type="text" name="address_line" id="chefSetupAddress" class="form-control" placeholder="House no, street, area" required>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Landmark</label>
+                    <input type="text" name="landmark" id="chefSetupLandmark" class="form-control" placeholder="Nearby landmark">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">City</label>
+                    <input type="text" name="city" id="chefSetupCity" class="form-control" placeholder="Ahmedabad" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">State</label>
+                    <input type="text" name="state" id="chefSetupState" class="form-control" placeholder="Gujarat" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Pincode</label>
+                <input type="text" name="pincode" id="chefSetupPincode" class="form-control" placeholder="380009" required>
+                <input type="hidden" name="location" id="chefSetupLocation" value="">
+                <small class="text-muted">Yahi full chef location customer ko route map aur distance ke liye dikhayi jayegi.</small>
+            </div>
+
+            <div class="mb-3">
+                <div class="ratio ratio-16x9 rounded overflow-hidden border">
+                    <iframe id="chefSetupMap" src="https://maps.google.com/maps?q=Ahmedabad&t=&z=12&ie=UTF8&iwloc=&output=embed" style="border:0;" allowfullscreen loading="lazy"></iframe>
+                </div>
             </div>
 
             <div class="mb-3">
@@ -30,12 +60,41 @@
 
             <div class="mb-3">
                 <label class="form-label">Upload Food Photos (Select multiple)</label>
-                <input type="file" name="food_images" class="form-control" multiple required>
+                <input type="file" name="food_images" class="form-control" multiple>
                 <small class="text-muted">You can select more than one image at once.</small>
             </div>
 
             <button type="submit" class="btn btn-primary w-100">Save Profile & Start Selling</button>
         </form>
+            </div>
+        </div>
     </div>
 </div>
+<script>
+  (function () {
+    const addressInput = document.getElementById("chefSetupAddress");
+    const landmarkInput = document.getElementById("chefSetupLandmark");
+    const cityInput = document.getElementById("chefSetupCity");
+    const stateInput = document.getElementById("chefSetupState");
+    const pincodeInput = document.getElementById("chefSetupPincode");
+    const locationInput = document.getElementById("chefSetupLocation");
+    const mapFrame = document.getElementById("chefSetupMap");
+    if (!locationInput || !mapFrame) return;
+    const updateMap = () => {
+      const query = [
+        addressInput.value,
+        landmarkInput.value,
+        cityInput.value,
+        stateInput.value,
+        pincodeInput.value
+      ].filter(Boolean).join(", ") || "Ahmedabad";
+      locationInput.value = query;
+      mapFrame.src = "https://maps.google.com/maps?q=" + encodeURIComponent(query) + "&t=&z=12&ie=UTF8&iwloc=&output=embed";
+    };
+    [addressInput, landmarkInput, cityInput, stateInput, pincodeInput].forEach((input) => {
+      input.addEventListener("input", updateMap);
+    });
+    updateMap();
+  })();
+</script>
 {% endblock %}

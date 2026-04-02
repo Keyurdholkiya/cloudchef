@@ -1,0 +1,355 @@
+{% extends "utils/base.html" %}
+
+{% block start %}
+<div class="container py-5 cc-order-page">
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-7">
+            <div class="card shadow-sm p-4 cc-soft">
+                <h3 class="mb-3 text-success">Order Confirmed</h3>
+                <div class="cc-time-strip mb-3" data-delivery-countdown data-initial-minutes="{{ quick_eta_minutes|default:5 }}">
+                    <div>
+                        <div class="small text-muted">Current India Time</div>
+                        <div class="fw-bold">{{ india_now|date:"h:i A" }}</div>
+                    </div>
+                    <div>
+                        <div class="small text-muted">Reach by</div>
+                        <div class="fw-bold" data-eta-arrival>{{ eta_destination_time|date:"h:i A" }}</div>
+                    </div>
+                    <div>
+                        <div class="small text-muted">ETA</div>
+                        <div class="fw-bold" data-eta-minutes>{{ quick_eta_minutes }} min</div>
+                    </div>
+                </div>
+                <p><strong>Order ID:</strong> {{ order.id }}</p>
+                <p><strong>Dish:</strong> {{ order.dish.name }}</p>
+                <p><strong>Quantity:</strong> {{ order.quantity }}</p>
+                <p><strong>Total:</strong> Rs. {{ order.total_amount }}</p>
+                <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+                <p><strong>Payment Status:</strong> {{ order.get_payment_status_display }}</p>
+                <p><strong>Order Status:</strong> {% if order.is_cancelled %}Cancelled{% else %}Active{% endif %}</p>
+                <p><strong>Estimated Delivery:</strong> {{ eta_time|date:"h:i A" }} (35-45 min)</p>
+                <div class="cc-connect-box my-3">
+                    <h5 class="mb-2">Delivery Address</h5>
+                    <p class="mb-1"><strong>{{ order.delivery_name }}</strong> | {{ order.delivery_phone }}</p>
+                    <p class="mb-0 text-muted">{{ order.delivery_address }}</p>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    {% if order.can_cancel and not order.is_cancelled %}
+                    <form method="post" action="{% url 'cancel_order' order.id %}" class="cc-async-cancel-form" data-async-form="true" data-redirect-url="{% url 'past_orders' %}" data-created-at="{{ order.created_at|date:'c' }}">
+                        {% csrf_token %}
+                        <button type="button" class="btn btn-outline-danger cc-cancel-btn cc-cancel-trigger">Cancel within 1 minute</button>
+                        <span class="cc-cancel-timer" data-cancel-timer></span>
+                    </form>
+                    {% elif order.is_cancelled %}
+                    <span class="btn btn-outline-secondary disabled">Order Cancelled</span>
+                    {% endif %}
+                    <a href="{% url 'shop' %}" class="btn btn-primary">Back to Shop</a>
+                    <a href="{% url 'cart_page' %}" class="btn btn-outline-secondary">Go to Cart</a>
+                </div>
+                <div class="cc-arrival-review-box mt-4 {% if existing_review %}is-visible{% endif %}" id="ccArrivalReviewBox">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                        <div>
+                            <h5 class="mb-1">Feedback & Review</h5>
+                            <p class="text-muted mb-0">Review sirf home page popup par ek hi baar liya jayega.</p>
+                        </div>
+                        {% if existing_review %}
+                        <span class="cc-rating-pill">{{ existing_review.rating }}/5</span>
+                        {% endif %}
+                    </div>
+                    {% if existing_review %}
+                    <div class="cc-connect-box">
+                        <p class="mb-1 fw-semibold">Aapka review</p>
+                        <p class="mb-1">{{ existing_review.feedback }}</p>
+                        <small class="text-muted">Thanks for sharing your feedback.</small>
+                    </div>
+                    {% else %}
+                    <div class="cc-connect-box">
+                        <p class="mb-1">Home page par delivered order ke liye feedback popup aayega.</p>
+                        <small class="text-muted">Cancelled order par feedback nahi pucha jayega.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card p-3 cc-soft cc-map-shell">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <h5 class="mb-1">Delivery Map</h5>
+                        <p class="small text-muted mb-0">Live route preview for your order</p>
+                    </div>
+                    <span class="cc-map-chip" data-delivery-chip>Destination active</span>
+                </div>
+                <div class="cc-delivery-status mb-3">
+                    <div>
+                        <div class="small text-muted">Delivery update</div>
+                        <div class="fw-bold" data-delivery-heading>A delivery partner is going to your destination</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="cc-delivery-progress" data-progress-circle>
+                            <svg viewBox="0 0 120 120" class="cc-delivery-progress-svg">
+                                <circle cx="60" cy="60" r="48" class="cc-delivery-progress-track"></circle>
+                                <circle cx="60" cy="60" r="48" class="cc-delivery-progress-fill" data-progress-ring></circle>
+                            </svg>
+                            <div class="cc-delivery-progress-copy">
+                                <strong data-progress-percent>0%</strong>
+                                <span>Route</span>
+                            </div>
+                        </div>
+                        <div class="cc-eta-pill" data-eta-pill>{{ quick_eta_minutes }} min</div>
+                    </div>
+                </div>
+                <div class="cc-map-stage cc-delivery-map" data-delivery-map style="--cc-trip-progress: 20%;">
+                    <div class="cc-map-grid"></div>
+                    <div class="cc-map-city">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <div class="cc-map-overlay">
+                        <div class="cc-map-top-labels">
+                            <div class="cc-map-top-card">
+                                <strong>Chef Kitchen</strong>
+                                <span>{{ chef_location|truncatechars:42 }}</span>
+                            </div>
+                            <div class="cc-map-top-card">
+                                <strong>Destination</strong>
+                                <span>{{ map_location|truncatechars:42 }}</span>
+                            </div>
+                        </div>
+                        <div class="cc-route-road"></div>
+                        <div class="cc-route-progress"></div>
+                        <div class="cc-route-node cc-route-node-start">
+                            <div class="cc-route-pin">&#127859;</div>
+                        </div>
+                        <div class="cc-route-node cc-route-node-end">
+                            <div class="cc-route-pin">&#127968;</div>
+                        </div>
+                        <div class="cc-delivery-vehicle" data-delivery-vehicle>
+                            <div class="cc-delivery-vehicle-icon">&#128663;</div>
+                            <div class="cc-delivery-vehicle-badge" data-delivery-badge>{{ quick_eta_minutes }} min away</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="small text-muted mt-2 mb-0">{{ map_location }}</p>
+                <div class="cc-distance-box mt-3">
+                    <div class="small text-muted">Chef Location</div>
+                    <div class="fw-bold mb-2">{{ chef_location }}</div>
+                    <div class="small text-muted">Approx distance to customer</div>
+                    <div class="fw-bold cc-distance-value">{% if distance_km %}{{ distance_km }} km away{% else %}Distance unavailable{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="cc-arrival-popup" id="ccArrivalPopup" hidden>
+    <div class="cc-arrival-popup-card">
+        <div class="cc-arrival-popup-icon">🎉</div>
+        <h4>Order Delivered</h4>
+        <p>Your order for <strong>{{ order.dish.name }}</strong> has arrived on location.</p>
+        <button type="button" class="btn btn-primary btn-sm" id="ccArrivalPopupClose">Close</button>
+    </div>
+</div>
+<script>
+  (function () {
+    const countdownRoot = document.querySelector("[data-delivery-countdown]");
+    if (countdownRoot) {
+      const playSuccessTone = window.ccPlaySuccessTone || function () {};
+      const playNotificationTone = window.ccPlayNotificationTone || function () {};
+      const triggerDeviceNotification = window.ccTriggerDeviceNotification || function () {};
+      const etaNode = countdownRoot.querySelector("[data-eta-minutes]");
+      const arrivalNode = countdownRoot.querySelector("[data-eta-arrival]");
+      const chipNode = document.querySelector("[data-delivery-chip]");
+      const headingNode = document.querySelector("[data-delivery-heading]");
+      const pillNode = document.querySelector("[data-eta-pill]");
+      const badgeNode = document.querySelector("[data-delivery-badge]");
+      const mapNode = document.querySelector("[data-delivery-map]");
+      const vehicleNode = document.querySelector("[data-delivery-vehicle]");
+      const progressPercentNode = document.querySelector("[data-progress-percent]");
+      const progressRing = document.querySelector("[data-progress-ring]");
+      const arrivalPopup = document.getElementById("ccArrivalPopup");
+      const arrivalPopupClose = document.getElementById("ccArrivalPopupClose");
+      const initialMinutes = Math.max(1, parseInt(countdownRoot.dataset.initialMinutes || "5", 10));
+      const totalSeconds = initialMinutes * 60;
+      const startMs = Date.now();
+      const ringLength = 2 * Math.PI * 48;
+      let arrivalSoundPlayed = false;
+
+      const playArrivalCelebration = () => {
+        playNotificationTone();
+        setTimeout(() => playNotificationTone(), 240);
+        setTimeout(() => playSuccessTone(), 500);
+      };
+
+      const openArrivalPopup = () => {
+        if (!arrivalPopup || arrivalPopup.dataset.shown === "true") return;
+        arrivalPopup.hidden = false;
+        arrivalPopup.classList.add("is-visible");
+        arrivalPopup.dataset.shown = "true";
+      };
+
+      const formatArrival = (date) => {
+        try {
+          return date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+        } catch (error) {
+          return "";
+        }
+      };
+
+      const updateDeliveryUi = () => {
+        const elapsedSeconds = Math.floor((Date.now() - startMs) / 1000);
+        const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+        const remainingMinutes = Math.max(0, Math.ceil(remainingSeconds / 60));
+        const progress = Math.min(100, Math.max(20, ((totalSeconds - remainingSeconds) / totalSeconds) * 100));
+        const roundedProgress = Math.min(100, Math.max(0, Math.round(progress)));
+
+        if (mapNode) {
+          mapNode.style.setProperty("--cc-trip-progress", `${progress}%`);
+        }
+        if (progressPercentNode) {
+          progressPercentNode.textContent = `${roundedProgress}%`;
+        }
+        if (progressRing) {
+          progressRing.style.strokeDasharray = `${ringLength}`;
+          progressRing.style.strokeDashoffset = `${ringLength - ((roundedProgress / 100) * ringLength)}`;
+        }
+
+        if (remainingSeconds <= 0) {
+          if (etaNode) etaNode.textContent = "Arrived";
+          if (pillNode) {
+            pillNode.textContent = "Arrived";
+            pillNode.classList.add("is-arrived");
+          }
+          if (badgeNode) badgeNode.textContent = "Order arrived";
+          if (chipNode) {
+            chipNode.textContent = "Arrived";
+            chipNode.classList.add("is-arrived");
+          }
+          if (headingNode) headingNode.textContent = "Order arrived on location";
+          if (arrivalNode) arrivalNode.textContent = formatArrival(new Date());
+          if (mapNode) mapNode.style.setProperty("--cc-trip-progress", "100%");
+          if (vehicleNode) vehicleNode.classList.add("is-arrived");
+          if (!arrivalSoundPlayed) {
+            playArrivalCelebration();
+            triggerDeviceNotification("Order Delivered", "Your Cloud Chef order has arrived on location.");
+            openArrivalPopup();
+            arrivalSoundPlayed = true;
+          }
+          return true;
+        }
+
+        const etaText = `${remainingMinutes} min`;
+        if (etaNode) etaNode.textContent = etaText;
+        if (pillNode) pillNode.textContent = etaText;
+        if (badgeNode) badgeNode.textContent = `${etaText} away`;
+        if (remainingSeconds <= 60) {
+          if (chipNode) chipNode.textContent = "Reached nearby";
+          if (headingNode) headingNode.textContent = "Delivery partner reached nearby your location";
+          if (badgeNode) badgeNode.textContent = "Reached nearby";
+        } else {
+          if (chipNode) chipNode.textContent = "On the way";
+          if (headingNode) headingNode.textContent = "A delivery partner is going to your destination";
+          if (badgeNode) badgeNode.textContent = `${etaText} away`;
+        }
+        if (arrivalNode) arrivalNode.textContent = formatArrival(new Date(Date.now() + remainingSeconds * 1000));
+        return false;
+      };
+
+      if (!updateDeliveryUi()) {
+        const intervalId = setInterval(() => {
+          if (updateDeliveryUi()) {
+            clearInterval(intervalId);
+          }
+        }, 1000);
+      }
+
+      if (arrivalPopupClose) {
+        arrivalPopupClose.addEventListener("click", () => {
+          arrivalPopup.classList.remove("is-visible");
+          setTimeout(() => {
+            arrivalPopup.hidden = true;
+          }, 220);
+        });
+      }
+    }
+
+    const forms = document.querySelectorAll(".cc-async-cancel-form");
+    const showToast = window.ccShowToast || function () {};
+    const playWarningTone = window.ccPlayWarningTone || function () {};
+    const playErrorTone = window.ccPlayErrorTone || function () {};
+    const startCountdown = (form) => {
+      const createdAt = form.dataset.createdAt ? new Date(form.dataset.createdAt) : null;
+      const timerNode = form.querySelector("[data-cancel-timer]");
+      if (!createdAt || !timerNode) return;
+      const expiresAt = createdAt.getTime() + 60000;
+
+      const tick = () => {
+        const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+        if (remaining <= 0) {
+          form.remove();
+          return;
+        }
+        const minutes = String(Math.floor(remaining / 60)).padStart(2, "0");
+        const seconds = String(remaining % 60).padStart(2, "0");
+        timerNode.textContent = `Cancel in ${minutes}:${seconds}`;
+      };
+
+      tick();
+      const intervalId = setInterval(() => {
+        if (!document.body.contains(form)) {
+          clearInterval(intervalId);
+          return;
+        }
+        tick();
+      }, 1000);
+    };
+
+    forms.forEach((form) => {
+      startCountdown(form);
+      const button = form.querySelector(".cc-cancel-trigger");
+      if (!button) return;
+      const runCancel = async () => {
+        if (!button || button.dataset.loading === "true") return;
+        button.dataset.loading = "true";
+        button.style.pointerEvents = "none";
+        button.disabled = true;
+        button.classList.add("is-loading");
+        const originalText = button.textContent;
+        button.textContent = "Cancelling...";
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            headers: {
+              "X-Requested-With": "XMLHttpRequest",
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          });
+          const data = await response.json();
+          if (!response.ok || !data.ok) throw new Error(data.message || "Unable to cancel order.");
+          showToast(data.message || "Order cancelled.", "warning");
+          playWarningTone();
+          setTimeout(() => {
+            window.location.href = form.dataset.redirectUrl || data.redirect_url || "{% url 'past_orders' %}";
+          }, 500);
+        } catch (error) {
+          showToast(error.message || "Unable to cancel order.", "error");
+          playErrorTone();
+          button.dataset.loading = "false";
+          button.style.pointerEvents = "auto";
+          button.disabled = false;
+          button.classList.remove("is-loading");
+          button.textContent = originalText;
+        }
+      };
+
+      button.addEventListener("pointerdown", runCancel);
+      button.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          runCancel();
+        }
+      });
+      button.addEventListener("click", (event) => event.preventDefault());
+    });
+  })();
+</script>
+{% endblock %}

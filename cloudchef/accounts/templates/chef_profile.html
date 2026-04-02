@@ -1,0 +1,107 @@
+{% extends "chef_panel_base.html" %}
+
+{% block chef_page %}
+<style>
+  @media (max-width: 575.98px) {
+    .cp-content-card .btn {
+      width: 100%;
+    }
+  }
+</style>
+<section class="cp-content-card h-100">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <h3 class="mb-1">Chef Profile</h3>
+      <p class="mb-0 text-muted">Kitchen details, full cooking location aur contact info yahan se manage karo.</p>
+    </div>
+  </div>
+  <form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="profile">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">First Name</label>
+        <input type="text" name="first_name" class="form-control" value="{{ request.user.first_name }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Last Name</label>
+        <input type="text" name="last_name" class="form-control" value="{{ request.user.last_name }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" value="{{ request.user.email }}" disabled>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Phone</label>
+        <input type="text" name="phone_number" class="form-control" value="{{ request.user.phone_number }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Chef/Kitchen Name</label>
+        <input type="text" name="chef_name" class="form-control" value="{{ chef_profile.chef_name|default:'' }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Starting Price</label>
+        <input type="number" name="price" class="form-control" min="0" step="0.01" value="{{ chef_profile.service_price|default:'' }}" required>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Kitchen Address Line</label>
+        <input type="text" name="address_line" id="chefAddressLine" class="form-control" value="{{ chef_profile.location|default:'' }}" placeholder="House no, street, area" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Landmark</label>
+        <input type="text" name="landmark" id="chefLandmark" class="form-control" placeholder="Nearby landmark">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">City</label>
+        <input type="text" name="city" id="chefCity" class="form-control" placeholder="Ahmedabad" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">State</label>
+        <input type="text" name="state" id="chefState" class="form-control" placeholder="Gujarat" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Pincode</label>
+        <input type="text" name="pincode" id="chefPincode" class="form-control" placeholder="380009" required>
+      </div>
+      <div class="col-12">
+        <input type="hidden" name="location" id="chefLocationHidden" value="{{ chef_profile.location|default:'' }}">
+        <small class="text-muted">Customer ko isi complete location ke hisaab se distance aur route map dikhaya jayega.</small>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control" rows="4" required>{{ chef_profile.chef_description|default:'' }}</textarea>
+      </div>
+      <div class="col-12">
+        <div class="ratio ratio-16x9 rounded overflow-hidden border">
+          <iframe id="chefProfileMap" src="https://maps.google.com/maps?q={{ chef_profile.location|default:'Ahmedabad'|urlencode }}&t=&z=12&ie=UTF8&iwloc=&output=embed" style="border:0;" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-danger fw-bold px-4" type="submit">Save Profile</button>
+      </div>
+    </div>
+  </form>
+</section>
+<script>
+  (function () {
+    const inputs = {
+      address: document.getElementById("chefAddressLine"),
+      landmark: document.getElementById("chefLandmark"),
+      city: document.getElementById("chefCity"),
+      state: document.getElementById("chefState"),
+      pincode: document.getElementById("chefPincode")
+    };
+    const hidden = document.getElementById("chefLocationHidden");
+    const mapFrame = document.getElementById("chefProfileMap");
+    const updateMap = () => {
+      const query = [inputs.address.value, inputs.landmark.value, inputs.city.value, inputs.state.value, inputs.pincode.value]
+        .filter(Boolean)
+        .join(", ") || "Ahmedabad";
+      hidden.value = query;
+      mapFrame.src = "https://maps.google.com/maps?q=" + encodeURIComponent(query) + "&t=&z=12&ie=UTF8&iwloc=&output=embed";
+    };
+    Object.values(inputs).forEach((field) => field.addEventListener("input", updateMap));
+    updateMap();
+  })();
+</script>
+{% endblock %}

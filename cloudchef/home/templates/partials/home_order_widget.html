@@ -1,0 +1,34 @@
+{% if latest_order %}
+<a href="{{ latest_order_link }}" class="order-status-float text-decoration-none cc-order-float-card cc-order-stage-{{ latest_order_meta.stage_key }}" data-home-order-tracker data-created-at="{{ latest_order_meta.created_at }}" data-total-minutes="{{ latest_order_meta.total_eta_minutes }}" data-stage="{{ latest_order_meta.stage_key }}">
+  <div class="cc-order-float-top">
+    <div>
+      <div class="small text-white-50">Order #{{ latest_order.id }}</div>
+      <div class="fw-bold cc-order-float-title" data-home-order-status>{{ latest_order_status }}</div>
+    </div>
+    <div class="cc-order-float-eta" data-home-order-eta>
+      {% if latest_order_meta.eta_minutes > 0 %}{{ latest_order_meta.eta_minutes }} min{% else %}Arrived{% endif %}
+    </div>
+  </div>
+  <div class="small text-white-50 cc-order-float-sub">{{ latest_order_customer_name|default:"Customer" }} | {{ latest_order.dish.name }}</div>
+  <div class="cc-order-float-mapchip">
+    <span>Route live</span>
+    <span>{{ latest_order_meta.progress_percent }}%</span>
+  </div>
+  <div class="cc-order-float-route">
+    <span class="cc-order-route-node">Chef</span>
+    <span class="cc-order-route-dots" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i>
+    </span>
+    <span class="cc-order-route-node is-home">Home</span>
+  </div>
+  <div class="cc-order-float-progress">
+    <div class="cc-order-float-progress-bar" data-home-order-progress style="width: {{ latest_order_meta.progress_percent }}%;"></div>
+    <span class="cc-order-float-bike" data-home-order-bike><i class="fa fa-motorcycle" aria-hidden="true"></i></span>
+  </div>
+  <div class="cc-order-float-steps">
+    <span class="cc-order-step cc-order-step-confirmed">Confirmed</span>
+    <span class="cc-order-step cc-order-step-transit">On the way</span>
+    <span class="cc-order-step cc-order-step-delivered">Arrived</span>
+  </div>
+</a>
+{% endif %}

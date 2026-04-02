@@ -1,0 +1,142 @@
+{% extends "utils/base.html" %}
+
+{% block start %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0 cc-panel-title">Past Orders</h2>
+    <a href="{% url 'shop' %}" class="btn btn-outline-danger btn-sm">Order More</a>
+  </div>
+
+  <div class="card p-3 cc-soft">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Date</th>
+            <th>Dish</th>
+            <th>Chef</th>
+            <th>Qty</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td>#ORD{{ order.id }}</td>
+            <td>{{ order.created_at|date:"d M Y, h:i A" }}</td>
+            <td>{{ order.dish.name }}</td>
+            <td>{{ order.dish.chef.chef_name }}</td>
+            <td>{{ order.quantity }}</td>
+            <td><strong>Rs. {{ order.total_amount }}</strong></td>
+            <td>
+              {% if order.is_cancelled %}
+              <span class="badge text-bg-secondary">Cancelled</span>
+              {% else %}
+              {{ order.payment_status }}
+              {% endif %}
+            </td>
+            <td>
+              {% if order.can_cancel and not order.is_cancelled %}
+              <form method="post" action="{% url 'cancel_order' order.id %}" class="d-inline-block mb-1 cc-async-cancel-form" data-async-form="true" data-redirect-url="{% url 'past_orders' %}" data-created-at="{{ order.created_at|date:'c' }}">
+                {% csrf_token %}
+                <button type="button" class="btn btn-sm btn-outline-danger cc-cancel-btn cc-cancel-trigger">Cancel</button>
+                <span class="cc-cancel-timer" data-cancel-timer></span>
+              </form>
+              {% endif %}
+              <div class="d-flex flex-wrap gap-1">
+                <a href="{% url 'reorder_order' order.id %}" class="btn btn-sm btn-primary">Reorder</a>
+                <form method="post" action="{% url 'remove_past_order' order.id %}" class="d-inline-block" onsubmit="return confirm('Is past order ko remove karna hai?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-secondary">Remove</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8">
+              <div class="alert alert-light border mb-0">No past orders found.</div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+  (function () {
+    const forms = document.querySelectorAll(".cc-async-cancel-form");
+    const showToast = window.ccShowToast || function () {};
+    const playWarningTone = window.ccPlayWarningTone || function () {};
+    const playErrorTone = window.ccPlayErrorTone || function () {};
+    const startCountdown = (form) => {
+      const createdAt = form.dataset.createdAt ? new Date(form.dataset.createdAt) : null;
+      const timerNode = form.querySelector("[data-cancel-timer]");
+      if (!createdAt || !timerNode) return;
+      const expiresAt = createdAt.getTime() + 60000;
+
+      const tick = () => {
+        const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+        if (remaining <= 0) {
+          form.remove();
+          return;
+        }
+        const minutes = String(Math.floor(remaining / 60)).padStart(2, "0");
+        const seconds = String(remaining % 60).padStart(2, "0");
+        timerNode.textContent = `${minutes}:${seconds}`;
+      };
+
+      tick();
+      const intervalId = setInterval(() => {
+        if (!document.body.contains(form)) {
+          clearInterval(intervalId);
+          return;
+        }
+        tick();
+      }, 1000);
+    };
+
+    forms.forEach((form) => {
+      startCountdown(form);
+      const button = form.querySelector(".cc-cancel-trigger");
+      if (!button) return;
+      button.addEventListener("click", async () => {
+        if (!button || button.dataset.loading === "true") return;
+        button.dataset.loading = "true";
+        button.disabled = true;
+        button.classList.add("is-loading");
+        const originalText = button.textContent;
+        button.textContent = "Cancelling...";
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            headers: {
+              "X-Requested-With": "XMLHttpRequest",
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          });
+          const data = await response.json();
+          if (!response.ok || !data.ok) throw new Error(data.message || "Unable to cancel order.");
+          showToast(data.message || "Order cancelled.", "warning");
+          playWarningTone();
+          setTimeout(() => {
+            window.location.href = form.dataset.redirectUrl || data.redirect_url || "{% url 'past_orders' %}";
+          }, 400);
+        } catch (error) {
+          showToast(error.message || "Unable to cancel order.", "error");
+          playErrorTone();
+          button.dataset.loading = "false";
+          button.disabled = false;
+          button.classList.remove("is-loading");
+          button.textContent = originalText;
+        }
+      });
+    });
+  })();
+</script>
+{% endblock %}

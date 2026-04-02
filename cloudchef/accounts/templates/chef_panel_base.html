@@ -1,0 +1,290 @@
+{% extends "utils/base.html" %}
+
+{% block body_class %}cc-chef-mode{% endblock %}
+
+{% block start %}
+<style>
+  .cp-wrap { background: transparent; min-height: calc(100vh - 120px); }
+  .cp-topbar {
+    background:
+      radial-gradient(circle at top left, rgba(255,255,255,.12), transparent 22%),
+      linear-gradient(90deg, var(--cc-nav-start), var(--cc-nav-mid), var(--cc-nav-end));
+    color: #fff; padding: 18px 22px;
+    display: grid; grid-template-columns: 280px 1fr 320px; gap: 16px; align-items: center;
+    box-shadow: 0 22px 44px rgba(37, 22, 15, 0.16);
+    border-radius: 0 0 24px 24px;
+  }
+  .cp-brand { display: flex; gap: 12px; align-items: center; font-weight: 700; }
+  .cp-brand-mark {
+    width: 54px; height: 54px; border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.18);
+    font-size: 1.55rem;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+  }
+  .cp-brand .badge { background: var(--cc-accent); color: #222; font-size: 13px; }
+  .cp-search {
+    width: 100%;
+    border: 1px solid rgba(255,255,255,.24);
+    border-radius: 16px;
+    padding: 12px 15px;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 12px 24px rgba(39, 20, 14, 0.12);
+  }
+  .cp-user { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+  .cp-user-card { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); border-radius: 16px; padding: 8px 10px; display: flex; gap: 9px; align-items: center; backdrop-filter: blur(10px); }
+  .cp-avatar { width: 42px; height: 42px; border-radius: 50%; background: color-mix(in srgb, var(--cc-accent) 68%, white 32%); display: flex; align-items: center; justify-content: center; color: #7f2e00; font-weight: 800; }
+  .cp-grid { display: grid; grid-template-columns: 270px 1fr; gap: 18px; padding: 20px 16px 16px; }
+  .cp-left {
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--cc-text) 88%, #071525 12%), color-mix(in srgb, var(--cc-primary-dark) 44%, #0d1624 56%));
+    color: #e8f0ff;
+    border-radius: 24px;
+    padding: 16px;
+    box-shadow: 0 22px 38px rgba(18, 21, 29, 0.2);
+  }
+  .cp-menu a { display: flex; justify-content: space-between; align-items: center; color: #e8f0ff; text-decoration: none; padding: 12px 13px; border-radius: 14px; margin-bottom: 8px; font-weight: 700; transition: transform .2s ease, background .2s ease; }
+  .cp-menu-label { display: inline-flex; align-items: center; gap: 10px; }
+  .cp-menu-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.08);
+    font-size: 0.95rem;
+    flex: 0 0 34px;
+  }
+  .cp-menu a.active, .cp-menu a:hover { background: linear-gradient(90deg, var(--cc-primary), var(--cc-primary-dark)); color: #fff; transform: translateX(4px); }
+  .cp-dot { background: var(--cc-accent); color: #222; border-radius: 999px; font-size: 12px; padding: 2px 8px; }
+  .cp-profile-box { border: 1px solid rgba(255,255,255,.15); border-radius: 18px; padding: 14px; margin-top: 16px; background: rgba(255,255,255,.04); }
+  .cp-profile-box .label { font-size: 12px; color: #b6c6e0; }
+  .cp-profile-box .value { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .cp-logout { margin-top: 18px; border: 1px solid rgba(255,255,255,.25); border-radius: 14px; display: block; padding: 12px; text-align: center; color: #fff; text-decoration: none; font-weight: 700; }
+  .cp-content-card { background: linear-gradient(180deg, var(--cc-surface), color-mix(in srgb, var(--cc-highlight) 75%, white 25%)); border: 1px solid var(--cc-border); border-radius: 24px; padding: 18px; color: var(--cc-text); box-shadow: 0 18px 34px rgba(76,41,22,.08); }
+  .cp-main { min-width: 0; display: grid; gap: 12px; }
+  .cp-subtle { color: var(--cc-muted); }
+  .cp-chip { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .8rem; border-radius: 999px; background: color-mix(in srgb, var(--cc-accent) 22%, white 78%); font-size: .8rem; font-weight: 800; }
+  @media (max-width: 1300px) {
+    .cp-topbar { grid-template-columns: 1fr; }
+    .cp-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 991px) {
+    .cp-topbar {
+      padding: 16px;
+      border-radius: 0 0 20px 20px;
+    }
+    .cp-user {
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .cp-user-card {
+      width: 100%;
+      justify-content: flex-start;
+    }
+    .cp-grid {
+      padding: 16px 12px 12px;
+      gap: 14px;
+    }
+    .cp-left {
+      padding: 14px;
+      border-radius: 20px;
+    }
+    .cp-menu {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .cp-menu a {
+      margin-bottom: 0;
+      min-height: 48px;
+      padding: 12px;
+    }
+    .cp-profile-box,
+    .cp-logout {
+      margin-top: 14px;
+    }
+  }
+  @media (max-width: 767.98px) {
+    .cp-wrap {
+      min-height: auto;
+    }
+    .cp-topbar {
+      gap: 12px;
+    }
+    .cp-brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      font-size: 1.35rem;
+    }
+    .cp-brand div[style] {
+      font-size: 1.45rem !important;
+    }
+    .cp-search {
+      min-height: 46px;
+      padding: 11px 14px;
+    }
+    .cp-topbar form {
+      flex-direction: column;
+    }
+    .cp-topbar form .btn {
+      width: 100%;
+      min-height: 44px;
+    }
+    .cp-menu {
+      grid-template-columns: 1fr;
+    }
+    .cp-profile-box .value {
+      word-break: break-word;
+    }
+    .cp-content-card {
+      border-radius: 20px;
+      padding: 16px;
+    }
+  }
+  @media (max-width: 575.98px) {
+    .cp-grid {
+      padding: 10px 8px 8px;
+    }
+    .cp-topbar {
+      padding: 12px 10px;
+      border-radius: 0 0 16px 16px;
+    }
+    .cp-user {
+      gap: 8px;
+    }
+    .cp-avatar {
+      width: 38px;
+      height: 38px;
+    }
+    .cp-chip {
+      font-size: 0.72rem;
+      padding: 0.38rem 0.65rem;
+    }
+    .cp-left {
+      padding: 10px;
+      border-radius: 18px;
+    }
+    .cp-menu {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scroll-snap-type: x proximity;
+      position: sticky;
+      top: 8px;
+      z-index: 3;
+      background: rgba(17, 24, 39, 0.28);
+      border-radius: 14px;
+      padding: 6px;
+    }
+    .cp-menu a {
+      flex: 0 0 auto;
+      min-width: 148px;
+      scroll-snap-align: start;
+      justify-content: flex-start;
+      text-align: left;
+      border-radius: 12px;
+      padding: 10px 12px;
+      transform: none !important;
+    }
+    .cp-menu-icon {
+      width: 30px;
+      height: 30px;
+      flex-basis: 30px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+    }
+    .cp-dot {
+      margin-left: 6px;
+    }
+    .cp-profile-box {
+      padding: 12px;
+      border-radius: 16px;
+      margin-top: 10px;
+    }
+    .cp-profile-box h6 {
+      margin-bottom: 8px !important;
+    }
+    .cp-profile-box .label {
+      font-size: 11px;
+    }
+    .cp-profile-box .value {
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .cp-logout {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 12px;
+    }
+    .cp-content-card {
+      border-radius: 18px;
+      padding: 14px;
+    }
+  }
+</style>
+
+<div class="cp-wrap">
+  <div class="cp-topbar">
+    <div class="cp-brand">
+      <div class="cp-brand-mark">C</div>
+      <div>
+        <div style="font-size: 28px; line-height: 1;">Chef Panel</div>
+        <span class="badge">Chef Panel</span>
+      </div>
+    </div>
+    <div>
+      <form method="get" action="" class="d-flex gap-2">
+        <input class="cp-search" name="q" value="{{ search_query }}" placeholder="Search orders, dishes..." />
+        <button class="btn btn-warning fw-bold" type="submit">Search</button>
+      </form>
+    </div>
+    <div class="cp-user">
+      <div class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">Online</div>
+      <div class="cp-user-card">
+        <div class="cp-avatar">{{ request.user.first_name|default:"C"|slice:":1"|upper }}</div>
+        <div>
+          <div class="fw-bold">{{ request.user.get_full_name|default:request.user.email }}</div>
+          <small>4.8 | Chef</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cp-grid">
+    <aside class="cp-left">
+      <nav class="cp-menu">
+        <a href="{% url 'chef_side' %}" class="{% if active_page == 'dashboard' %}active{% endif %}"><span class="cp-menu-label"><span class="cp-menu-icon">⌂</span><span>Dashboard</span></span></a>
+        <a href="{% url 'add_dish' %}" class="{% if active_page == 'add_dish' %}active{% endif %}"><span class="cp-menu-label"><span class="cp-menu-icon">＋</span><span>Add New Dish</span></span></a>
+        <a href="{% url 'chef_my_dishes' %}" class="{% if active_page == 'my_dishes' %}active{% endif %}"><span class="cp-menu-label"><span class="cp-menu-icon">🍽</span><span>My Dishes</span></span><span class="cp-dot">{{ live_dishes_count }}</span></a>
+        <a href="{% url 'chef_orders' %}" class="{% if active_page == 'orders' %}active{% endif %}"><span class="cp-menu-label"><span class="cp-menu-icon">🧾</span><span>Orders</span></span><span class="cp-dot">{{ total_orders }}</span></a>
+        <a href="{% url 'chef_earnings' %}" class="{% if active_page == 'earnings' %}active{% endif %}"><span class="cp-menu-label"><span class="cp-menu-icon">₹</span><span>Earnings</span></span></a>
+        <a href="{% url 'chef_profile' %}" class="{% if active_page == 'profile' %}active{% endif %}"><span class="cp-menu-label"><span class="cp-menu-icon">☺</span><span>Profile</span></span></a>
+      </nav>
+
+      <div class="cp-profile-box">
+        <h6 class="mb-2">Chef Profile</h6>
+        {% if chef_profile %}
+        <div class="label">Kitchen</div><div class="value">{{ chef_profile.chef_name }}</div>
+        <div class="label">Email</div><div class="value">{{ request.user.email }}</div>
+        <div class="label">Phone</div><div class="value">{{ request.user.phone_number|default:"-" }}</div>
+        <div class="label">Location</div><div class="value">{{ chef_profile.location }}</div>
+        {% else %}
+        <div class="value">Profile not completed.</div>
+        <a class="btn btn-warning btn-sm w-100 fw-bold" href="{% url 'chef_profile_setup' %}">Complete Chef Profile</a>
+        {% endif %}
+      </div>
+      <a class="cp-logout" href="{% url 'chef_logout' %}">Logout</a>
+    </aside>
+
+    <main class="cp-main">
+      {% block chef_page %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

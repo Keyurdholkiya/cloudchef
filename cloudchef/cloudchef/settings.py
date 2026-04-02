@@ -27,7 +27,22 @@ SECRET_KEY = 'django-insecure-xljk!wzbtyq2p-^*xiqfz+lt!aslm089o4)ogt6m$ld588%$e_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "0.0.0.0"]
+if DEBUG:
+    # Local dev on phone / same Wi-Fi / hotspot
+    ALLOWED_HOSTS += ["*"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1",
+    "http://localhost",
+    "http://0.0.0.0",
+    "https://*.ngrok-free.app",
+    "https://*.ngrok-free.dev",
+    "https://*.ngrok.app",
+    "https://*.ngrok.dev",
+    "https://*.ngrok.io",
+    "https://*.trycloudflare.com",
+]
 
 LOGIN_URL = '/accounts/login/'
 # Application definition
@@ -52,6 +67,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'home.middleware.NoStoreForDynamicPagesMiddleware',
 ]
 
 ROOT_URLCONF = 'cloudchef.urls'
@@ -66,6 +82,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'home.context_processors.cart_context',
             ],
         },
     },
@@ -109,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -123,9 +140,32 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Local dev email fallback: verification/OTP emails print in terminal.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@cloudchef.local'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-AUTH_USER_MODEL = 'accounts.ChefsUser'
+AUTH_USER_MODEL = 'accounts.chefsUser'
+
+# UPI payment receiver details
+UPI_ID = "keyurdholkiya2005@okaxis"
+UPI_NAME = "Keyur Dholkiya"
+
+# Optional outbound notification providers
+SMS_API_URL = os.getenv("SMS_API_URL", "")
+SMS_API_TOKEN = os.getenv("SMS_API_TOKEN", "")
+SMS_SENDER_ID = os.getenv("SMS_SENDER_ID", "CLOUDCHEF")
+WHATSAPP_API_URL = os.getenv("WHATSAPP_API_URL", "")
+WHATSAPP_API_TOKEN = os.getenv("WHATSAPP_API_TOKEN", "")
+
+# Twilio first-class support for SMS and WhatsApp
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
+TWILIO_SMS_FROM = os.getenv("TWILIO_SMS_FROM", "")
+TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "")

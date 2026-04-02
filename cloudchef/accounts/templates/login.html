@@ -10,6 +10,7 @@
       <form id="login-form" method="POST">
         {% include "alerts.html" %}
         {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
           <div class="mb-3">
             <label for="email-input" class="form-label">Email address</label>
             <input id="email-input" type="email" name="email" class="form-control" aria-describedby="emailHelp">
@@ -42,9 +43,8 @@
     }
 
     console.log(`Redirecting with email: ${email}`);
-    window.location.href = `/account/send_otp/${email}/`;
+    window.location.href = `/accounts/send_otp/${email}/`;
   }
 </script>
 
 {% endblock %}
-
