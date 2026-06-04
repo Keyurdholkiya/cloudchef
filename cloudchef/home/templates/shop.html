@@ -7,8 +7,16 @@
             <h2 class="mb-1">Shop</h2>
             <p class="mb-0 text-muted">Handpicked homemade dishes from local chefs, ready for your cart.</p>
         </div>
-        <form method="get" class="d-flex gap-2">
-            <input type="text" name="search" class="form-control" placeholder="Search dish..." value="{{ search }}">
+        <form method="get" class="cc-shop-filter-form">
+            <input type="text" name="search" class="form-control" placeholder="Search dish, chef, area..." value="{{ search }}">
+            <input type="number" min="0" name="min_price" class="form-control" placeholder="Min Rs." value="{{ min_price }}">
+            <input type="number" min="0" name="max_price" class="form-control" placeholder="Max Rs." value="{{ max_price }}">
+            <select name="sort" class="form-select">
+                <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
+                <option value="rating" {% if sort == "rating" %}selected{% endif %}>Top rated</option>
+                <option value="price_low" {% if sort == "price_low" %}selected{% endif %}>Price: low to high</option>
+                <option value="price_high" {% if sort == "price_high" %}selected{% endif %}>Price: high to low</option>
+            </select>
             <button class="btn btn-outline-primary" type="submit">Search</button>
         </form>
     </div>
@@ -31,8 +39,14 @@
       try {
         const params = new URLSearchParams();
         const searchInput = document.querySelector('input[name="search"]');
+        const minInput = document.querySelector('input[name="min_price"]');
+        const maxInput = document.querySelector('input[name="max_price"]');
+        const sortInput = document.querySelector('select[name="sort"]');
         const currentSearch = searchInput ? searchInput.value.trim() : "";
         if (currentSearch) params.set("search", currentSearch);
+        if (minInput && minInput.value.trim()) params.set("min_price", minInput.value.trim());
+        if (maxInput && maxInput.value.trim()) params.set("max_price", maxInput.value.trim());
+        if (sortInput && sortInput.value) params.set("sort", sortInput.value);
         const response = await fetch("{% url 'shop_dishes_partial' %}?" + params.toString(), {
           headers: { "X-Requested-With": "XMLHttpRequest" }
         });

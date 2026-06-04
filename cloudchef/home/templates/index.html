@@ -27,16 +27,16 @@
       </div>
       <div class="cc-hero-stats mt-4">
         <div class="cc-hero-stat">
-          <strong>100+</strong>
-          <span>Happy food lovers</span>
+          <strong>{{ marketplace_stats.order_count|default:0 }}</strong>
+          <span>Orders served</span>
         </div>
         <div class="cc-hero-stat">
-          <strong>25+</strong>
-          <span>Home chefs onboarding</span>
+          <strong>{{ marketplace_stats.active_chef_count|default:0 }}</strong>
+          <span>Active home chefs</span>
         </div>
         <div class="cc-hero-stat">
-          <strong>Daily</strong>
-          <span>Fresh homemade dishes</span>
+          <strong>{{ marketplace_stats.live_dish_count|default:0 }}</strong>
+          <span>Fresh dishes live</span>
         </div>
       </div>
     </div>
@@ -84,10 +84,10 @@
         </div>
         {% empty %}
         <div class="cc-empty-market cc-empty-market-reviews">
-          <div class="cc-empty-market-icon">⭐</div>
+          <div class="cc-empty-market-icon">*</div>
           <div class="cc-empty-market-copy">
             <h4>Reviews will appear here</h4>
-            <p>Abhi customer review section intentionally empty rakha hai. Jaise hi fresh verified reviews aayenge, yahan neatly show honge.</p>
+            <p>Once customers order and submit feedback, verified reviews will appear here automatically.</p>
             <div class="cc-empty-market-pills">
               <span>Verified only</span>
               <span>Clean presentation</span>

@@ -11,6 +11,13 @@
         <h5 class="card-title">{{ dish.name }}</h5>
         <p class="text-muted small mb-2">By {{ dish.chef.chef_name }}</p>
         <p class="small flex-grow-1">{{ dish.description|default:"Fresh homemade dish."|truncatechars:60 }}</p>
+        <div class="small text-muted mb-2">
+          {% if dish.review_count %}
+          {{ dish.average_rating|floatformat:1 }}/5 rating
+          {% else %}
+          Freshly listed
+          {% endif %}
+        </div>
         <div class="d-flex justify-content-between align-items-center">
           <strong>Rs. {{ dish.price }}</strong>
           <a href="{% url 'add_to_cart' dish.id %}?next={% url 'index' %}" class="btn btn-sm btn-primary cc-add-to-cart-btn" data-cart-url="{% url 'add_to_cart' dish.id %}?next={% url 'index' %}">Add to Cart</a>
@@ -21,14 +28,14 @@
   {% empty %}
   <div class="col-12">
     <div class="cc-empty-market">
-      <div class="cc-empty-market-icon">🍲</div>
+      <div class="cc-empty-market-icon">CC</div>
       <div class="cc-empty-market-copy">
         <h4>Fresh dishes coming soon</h4>
-        <p>Abhi customer menu temporarily pause par hai. Chef-side se nayi dishes live hote hi yahan beautifully appear hongi.</p>
+        <p>Ask a chef to add a dish from the chef panel, or run the demo seed command to explore the complete ordering flow.</p>
         <div class="cc-empty-market-pills">
-          <span>Clean UI</span>
-          <span>Fast loading</span>
-          <span>New dishes soon</span>
+          <span>Live menu</span>
+          <span>Cart ready</span>
+          <span>Checkout ready</span>
         </div>
       </div>
     </div>

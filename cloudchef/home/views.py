@@ -7,15 +7,17 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
+from django.db import transaction
+from django.db.models import Avg, Count, Q
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from urllib.error import URLError
 import json
 import math
+import re
 from zoneinfo import ZoneInfo
 from accounts.models import Dish, Order, SavedAddress, Notification, OrderReview, CartItem
 from .notification_service import notify_order_placed, notify_payment_success, notify_chef_order_placed, build_whatsapp_link, sync_delivery_notifications
-from django.db.models import Q
 
 THEME_OPTIONS = [
     ("light", "Classic Spice", "Warm cream with tomato red highlights"),
@@ -140,7 +142,63 @@ def _available_dishes_queryset():
 
 
 def _featured_dishes_queryset():
-    return _available_dishes_queryset().select_related('chef').order_by('-id')[:12]
+    return (
+        _available_dishes_queryset()
+        .select_related('chef')
+        .annotate(review_count=Count("reviews"), average_rating=Avg("reviews__rating"))
+        .order_by('-id')[:12]
+    )
+
+
+def _shop_dishes_queryset(params):
+    dishes = (
+        _available_dishes_queryset()
+        .select_related("chef")
+        .annotate(review_count=Count("reviews"), average_rating=Avg("reviews__rating"))
+    )
+    search = (params.get("search") or "").strip()
+    if search:
+        dishes = dishes.filter(
+            Q(name__icontains=search)
+            | Q(description__icontains=search)
+            | Q(chef__chef_name__icontains=search)
+            | Q(chef__location__icontains=search)
+        )
+
+    min_price = _decimal_param(params.get("min_price"))
+    max_price = _decimal_param(params.get("max_price"))
+    if min_price is not None:
+        dishes = dishes.filter(price__gte=min_price)
+    if max_price is not None:
+        dishes = dishes.filter(price__lte=max_price)
+
+    sort = (params.get("sort") or "newest").strip()
+    sort_map = {
+        "price_low": ("price", "-id"),
+        "price_high": ("-price", "-id"),
+        "rating": ("-average_rating", "-review_count", "-id"),
+        "newest": ("-id",),
+    }
+    return dishes.order_by(*sort_map.get(sort, sort_map["newest"]))
+
+
+def _decimal_param(value):
+    if value in (None, ""):
+        return None
+    try:
+        return max(0, float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _marketplace_stats():
+    live_dishes = _available_dishes_queryset()
+    return {
+        "live_dish_count": live_dishes.count(),
+        "active_chef_count": live_dishes.values("chef_id").distinct().count(),
+        "order_count": Order.objects.filter(is_cancelled=False).count(),
+        "review_count": OrderReview.objects.count(),
+    }
 
 
 def _merge_session_cart_to_db(request):
@@ -292,7 +350,11 @@ def distance_preview(request):
 
 def index(request):
     featured_dishes = _featured_dishes_queryset()
-    customer_reviews = []
+    customer_reviews = (
+        OrderReview.objects.select_related("user", "dish", "chef")
+        .filter(order__is_cancelled=False)
+        .order_by("-id")[:6]
+    )
     order_context = _home_order_context(request.user)
 
     return render(
@@ -301,6 +363,7 @@ def index(request):
         {
             "featured_dishes": featured_dishes,
             "customer_reviews": customer_reviews,
+            "marketplace_stats": _marketplace_stats(),
             **order_context,
         },
     )
@@ -397,11 +460,18 @@ def events(request):
     return render(request, 'events.html')
 
 def shop(request):
-    dishes = _available_dishes_queryset().select_related('chef').order_by('-id')
-    search = request.GET.get("search")
-    if search:
-        dishes = dishes.filter(name__icontains=search)
-    return render(request, 'shop.html', {"dishes": dishes, "search": search or ""})
+    dishes = _shop_dishes_queryset(request.GET)
+    return render(
+        request,
+        'shop.html',
+        {
+            "dishes": dishes,
+            "search": (request.GET.get("search") or "").strip(),
+            "min_price": request.GET.get("min_price", ""),
+            "max_price": request.GET.get("max_price", ""),
+            "sort": request.GET.get("sort", "newest"),
+        },
+    )
 
 
 def _get_cart(request):
@@ -436,7 +506,12 @@ def _cart_items_with_total(request):
         return items, total
 
     cart = _get_cart(request)
-    dish_ids = [int(i) for i in cart.keys()]
+    dish_ids = []
+    for item_id in cart.keys():
+        try:
+            dish_ids.append(int(item_id))
+        except (TypeError, ValueError):
+            continue
     dishes = _available_dishes_queryset().filter(id__in=dish_ids).select_related('chef')
     dish_map = {d.id: d for d in dishes}
 
@@ -444,7 +519,12 @@ def _cart_items_with_total(request):
     total = 0
     cart_changed = False
     for dish_id_str, qty in cart.items():
-        dish_id = int(dish_id_str)
+        try:
+            dish_id = int(dish_id_str)
+        except (TypeError, ValueError):
+            cart.pop(dish_id_str, None)
+            cart_changed = True
+            continue
         dish = dish_map.get(dish_id)
         if not dish:
             cart.pop(dish_id_str, None)
@@ -553,7 +633,18 @@ def _address_payload_from_post(request, user, addresses):
 
 def _validate_address_payload(payload):
     required_fields = ["full_name", "phone_number", "address_line", "city", "state", "pincode"]
-    return all(payload.get(field) for field in required_fields)
+    if not all(payload.get(field) for field in required_fields):
+        return False, "Please fill complete delivery address details."
+    if not re.fullmatch(r"[6-9]\d{9}", payload["phone_number"]):
+        return False, "Please enter a valid 10 digit Indian phone number."
+    if not re.fullmatch(r"\d{6}", payload["pincode"]):
+        return False, "Please enter a valid 6 digit pincode."
+    return True, ""
+
+
+def _valid_payment_method(value):
+    valid_methods = {choice[0] for choice in Order.PaymentMethod.choices}
+    return value if value in valid_methods else Order.PaymentMethod.COD
 
 
 def _persist_address_payload(user, payload):
@@ -759,8 +850,9 @@ def checkout_cart(request):
 
     if request.method == "POST":
         address_form = _address_payload_from_post(request, request.user, saved_addresses)
-        if not _validate_address_payload(address_form):
-            messages.warning(request, "Please fill complete delivery address details.")
+        is_valid_address, address_error = _validate_address_payload(address_form)
+        if not is_valid_address:
+            messages.warning(request, address_error)
             return render(
                 request,
                 "checkout_cart.html",
@@ -781,29 +873,31 @@ def checkout_cart(request):
             address_form["selected_address_id"] = saved_address.id
             address_form["map_query"] = saved_address.map_query
 
-        payment_method = request.POST.get("payment_method", "COD")
+        payment_method = _valid_payment_method(request.POST.get("payment_method", Order.PaymentMethod.COD))
         created_order_ids = []
         delivery_fields = _delivery_fields_from_payload(address_form)
 
-        for item in items:
-            dish = item["dish"]
-            qty = item["quantity"]
-            line_total = item["line_total"]
-            payment_status = (
-                Order.PaymentStatus.PAID
-                if payment_method in [Order.PaymentMethod.CARD]
-                else Order.PaymentStatus.PENDING
-            )
-            order = Order.objects.create(
-                buyer=request.user,
-                dish=dish,
-                quantity=qty,
-                total_amount=line_total,
-                payment_method=payment_method,
-                payment_status=payment_status,
-                **delivery_fields,
-            )
-            created_order_ids.append(order.id)
+        with transaction.atomic():
+            for item in items:
+                dish = item["dish"]
+                qty = max(int(item["quantity"] or 1), 1)
+                line_total = dish.price * qty
+                payment_status = (
+                    Order.PaymentStatus.PAID
+                    if payment_method in [Order.PaymentMethod.CARD]
+                    else Order.PaymentStatus.PENDING
+                )
+                order = Order.objects.create(
+                    buyer=request.user,
+                    dish=dish,
+                    quantity=qty,
+                    total_amount=line_total,
+                    payment_method=payment_method,
+                    payment_status=payment_status,
+                    **delivery_fields,
+                )
+                created_order_ids.append(order.id)
+            CartItem.objects.filter(user=request.user).delete()
 
         created_orders = list(Order.objects.filter(id__in=created_order_ids).select_related("dish"))
         notify_order_placed(request.user, created_orders)
@@ -811,7 +905,6 @@ def checkout_cart(request):
         if payment_method == Order.PaymentMethod.CARD:
             notify_payment_success(request.user, created_orders)
 
-        CartItem.objects.filter(user=request.user).delete()
         request.session["cart"] = {}
         request.session["last_order_ids"] = created_order_ids
         request.session.modified = True
@@ -849,10 +942,14 @@ def checkout(request, dish_id):
     address_form = _default_address_data(request.user, saved_addresses, preferred_address_id=preferred_address_id)
 
     if request.method == "POST":
-        quantity = int(request.POST.get("quantity", 1))
+        try:
+            quantity = max(1, min(20, int(request.POST.get("quantity", 1))))
+        except (TypeError, ValueError):
+            quantity = 1
         address_form = _address_payload_from_post(request, request.user, saved_addresses)
-        if not _validate_address_payload(address_form):
-            messages.warning(request, "Please fill complete delivery address details.")
+        is_valid_address, address_error = _validate_address_payload(address_form)
+        if not is_valid_address:
+            messages.warning(request, address_error)
             return render(
                 request,
                 "checkout.html",
@@ -872,7 +969,7 @@ def checkout(request, dish_id):
             address_form["selected_address_id"] = saved_address.id
             address_form["map_query"] = saved_address.map_query
 
-        payment_method = request.POST.get("payment_method", "COD")
+        payment_method = _valid_payment_method(request.POST.get("payment_method", Order.PaymentMethod.COD))
         total_amount = dish.price * quantity
         delivery_fields = _delivery_fields_from_payload(address_form)
 
@@ -882,15 +979,16 @@ def checkout(request, dish_id):
             else Order.PaymentStatus.PENDING
         )
 
-        order = Order.objects.create(
-            buyer=request.user,
-            dish=dish,
-            quantity=quantity,
-            total_amount=total_amount,
-            payment_method=payment_method,
-            payment_status=payment_status,
-            **delivery_fields,
-        )
+        with transaction.atomic():
+            order = Order.objects.create(
+                buyer=request.user,
+                dish=dish,
+                quantity=quantity,
+                total_amount=total_amount,
+                payment_method=payment_method,
+                payment_status=payment_status,
+                **delivery_fields,
+            )
 
         messages.success(request, f"Order placed successfully. Order ID: {order.id}")
         notify_order_placed(request.user, [order])
@@ -1244,10 +1342,7 @@ def featured_dishes_partial(request):
 
 
 def shop_dishes_partial(request):
-    dishes = _available_dishes_queryset().select_related('chef').order_by('-id')
-    search = request.GET.get("search")
-    if search:
-        dishes = dishes.filter(name__icontains=search)
+    dishes = _shop_dishes_queryset(request.GET)
     html = render(
         request,
         "partials/shop_dishes_grid.html",
