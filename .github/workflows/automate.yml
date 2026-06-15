@@ -49,7 +49,7 @@ jobs:
 
                 docker stop cloudchef || true
                 docker rm cloudchef || true
-                
+
                 docker run -d \
                 --name cloudchef \
                 -p 8000:8000 \
