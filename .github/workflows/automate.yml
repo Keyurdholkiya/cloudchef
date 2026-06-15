@@ -36,3 +36,21 @@ jobs:
           file: ./cloudchef/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-project:v1.0
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USER }}
+            key: ${{ secrets.EC2_SSH_KEY }}
+
+            script: |
+                docker pull ${{ secrets.DOCKERHUB_USERNAME }}/my-project:v1.0
+
+                docker stop cloudchef || true
+                docker rm cloudchef || true
+
+                docker run -d \
+                --name cloudchef \
+                -p 8000:8000 \
+                ${{ secrets.DOCKERHUB_USERNAME }}/my-project:v1.0
