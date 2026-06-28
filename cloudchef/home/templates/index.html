@@ -23,7 +23,11 @@
       <p class="text-muted mb-4">Discover trusted home chefs, order authentic dishes, and track delivery with clear ETA.</p>
       <div class="d-flex gap-2 flex-wrap">
         <a href="{% url 'shop' %}" class="btn btn-primary">Explore Dishes</a>
-        <a href="{% url 'chef_side' %}" class="btn btn-outline-danger">Become a Chef</a>
+        {% if chef_session_user %}
+        <a href="{% url 'chef_side' %}" class="btn btn-outline-danger">Open Chef Console</a>
+        {% else %}
+        <a href="{% url 'chef_register' %}" class="btn btn-outline-danger">Become a Chef</a>
+        {% endif %}
       </div>
       <div class="cc-hero-stats mt-4">
         <div class="cc-hero-stat">
@@ -47,6 +51,28 @@
         <div class="cc-hero-badge cc-hero-badge-bottom">Made by trusted home chefs</div>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="container pb-5">
+  <div class="cc-trust-strip">
+    <div><span class="cc-trust-icon">✓</span><strong>Verified home chefs</strong><small>Clear chef identity and kitchen profile</small></div>
+    <div><span class="cc-trust-icon">⌁</span><strong>Fresh live menu</strong><small>Only currently available dishes shown</small></div>
+    <div><span class="cc-trust-icon">₹</span><strong>Transparent pricing</strong><small>Price and delivery details before checkout</small></div>
+    <div><span class="cc-trust-icon">↻</span><strong>Easy reorder</strong><small>Your favourites are one tap away</small></div>
+  </div>
+</section>
+
+<section class="container pb-5">
+  <div class="text-center mb-4">
+    <span class="badge text-bg-warning mb-2">Simple & reliable</span>
+    <h2 class="cc-grid-title mb-2">Ghar ka khana in three easy steps</h2>
+    <p class="text-muted mb-0">No confusing menus—find, order and enjoy.</p>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-4"><div class="cc-step-card"><span>01</span><h4>Choose your meal</h4><p>Chef, area, price and taste ke hisaab se fresh dishes explore karo.</p></div></div>
+    <div class="col-md-4"><div class="cc-step-card"><span>02</span><h4>Checkout clearly</h4><p>Address, payment method aur complete order total confirm karo.</p></div></div>
+    <div class="col-md-4"><div class="cc-step-card"><span>03</span><h4>Enjoy & review</h4><p>Order status dekho, meal enjoy karo aur verified feedback share karo.</p></div></div>
   </div>
 </section>
 

@@ -8,7 +8,7 @@
     </a>
 
     <a class="cc-mobile-chef-switch" href="{% url 'chef_side' %}" data-chef-switch="true" aria-label="Open Chef Side">
-      <span class="cc-mobile-chef-switch-copy">Chef Side</span>
+      <span class="cc-mobile-chef-switch-copy">{% if chef_session_user %}Console{% else %}Chef Side{% endif %}</span>
       <span class="cc-chef-switch-track">
         <span class="cc-chef-switch-thumb"><i class="fa fa-cutlery" aria-hidden="true"></i></span>
       </span>
@@ -27,7 +27,7 @@
             <span class="cc-chef-switch-track">
               <span class="cc-chef-switch-thumb"><i class="fa fa-cutlery" aria-hidden="true"></i></span>
             </span>
-            <span>Chef Side</span>
+            <span>{% if chef_session_user %}Chef Console <span class="cc-online-dot" title="Chef logged in"></span>{% else %}Chef Side{% endif %}</span>
           </a>
         </li>
       </ul>

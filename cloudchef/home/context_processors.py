@@ -1,10 +1,15 @@
-from accounts.models import Notification, CartItem, Dish
+from accounts.models import Notification, CartItem, Dish, chefsUser
 from django.utils import timezone
 from django.db import models
 from .notification_service import sync_delivery_notifications
 
 
 def cart_context(request):
+    chef_session_user = chefsUser.objects.filter(
+        id=request.session.get("chef_user_id"),
+        role=chefsUser.Role.VENDOR,
+        is_active=True,
+    ).first()
     cart = request.session.get("cart", {})
     cart_count = 0
     mini_cart_items = []
@@ -139,4 +144,5 @@ def cart_context(request):
         "unread_notification_count": unread_notification_count,
         "pending_notifications": pending_notifications,
         "sound_theme": sound_theme,
+        "chef_session_user": chef_session_user,
     }
