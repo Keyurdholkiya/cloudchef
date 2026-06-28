@@ -1,9 +1,6 @@
 from decimal import Decimal
-from datetime import timedelta
-
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.utils import timezone
 from django.utils.text import slugify
 
 from accounts.models import Chef, Dish, Order, OrderReview, SavedAddress, chefsUser
@@ -77,6 +74,13 @@ class Command(BaseCommand):
             ]
 
             created_dishes = []
+            dish_images = [
+                "dish_images/1000049546.jpg",
+                "dish_images/1000008388.jpg",
+                "dish_images/1000049550.jpg",
+                "dish_images/Screenshot_2026-03-21_220435.png",
+                "dish_images/Screenshot_2026-03-21_151117.png",
+            ]
             for spec in chef_specs:
                 owner = self._user(
                     email=spec["email"],
@@ -104,8 +108,10 @@ class Command(BaseCommand):
                         defaults={
                             "description": description,
                             "price": Decimal(price),
+                            "image": dish_images[len(created_dishes) % len(dish_images)],
                             "is_available": True,
-                            "available_until": timezone.now() + timedelta(hours=8),
+                            # Starter marketplace dishes stay visible until a chef changes them.
+                            "available_until": None,
                         },
                     )
                     created_dishes.append(dish)

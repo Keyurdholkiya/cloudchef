@@ -6,10 +6,12 @@ from django.conf import settings
 from .utils import generateRandomToken, sendEmailToken
 from django.contrib.auth import authenticate, login, logout
 import random
+from functools import wraps
 from .utils import sendOTPtoEmail
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.http import url_has_allowed_host_and_scheme
 from urllib.parse import quote
 from datetime import timedelta
 from .models import chefsUser, Chef, FoodImages, Dish, Order
@@ -63,11 +65,36 @@ def _prepare_fresh_session_for_user_login(request, user):
         request.session.modified = True
 
 
+def _safe_next_url(request, default):
+    next_url = request.POST.get("next") or request.GET.get("next")
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return next_url
+    return default
+
+
+def _chef_login_required(view_func):
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        chef_user_id = request.session.get("chef_user_id")
+        chef_user = chefsUser.objects.filter(
+            id=chef_user_id, role=chefsUser.Role.VENDOR, is_active=True
+        ).first()
+        if not chef_user:
+            request.session.pop("chef_user_id", None)
+            messages.info(request, "Please login from Chef Login to access Chef Console.")
+            return redirect(f"/accounts/chef-login/?next={quote(request.get_full_path())}")
+        request.chef_user = chef_user
+        return view_func(request, *args, **kwargs)
+
+    return wrapped
+
+
 def login_page(request):
     if request.method == "POST":
         email = (request.POST.get('email') or "").strip().lower()
         password = request.POST.get('password') or ""
-        next_url = request.POST.get('next') or request.GET.get('next')
 
         chef_user_qs = chefsUser.objects.filter(email=email)
 
@@ -76,6 +103,10 @@ def login_page(request):
             return redirect(f'/accounts/register/?email={quote(email)}')
 
         chef_user = chef_user_qs.first()
+
+        if chef_user.role != chefsUser.Role.CUSTOMER:
+            messages.info(request, "This is a chef account. Please use Chef Login.")
+            return redirect('/accounts/chef-login/')
 
         if not chef_user.is_verified:
             if settings.DEBUG:
@@ -99,7 +130,7 @@ def login_page(request):
             request.session["login_mode"] = "customer"
             notify_login_welcome(user)
             messages.success(request, "Login Successful!")
-            return redirect(next_url or '/')
+            return redirect(_safe_next_url(request, '/'))
 
         messages.warning(request, "Invalid credentials.")
         return redirect('/accounts/login/')
@@ -111,14 +142,16 @@ def chef_login_page(request):
     if request.method == "POST":
         email = (request.POST.get('email') or "").strip().lower()
         password = request.POST.get('password') or ""
-        next_url = request.POST.get('next') or request.GET.get('next')
 
         chef_user_qs = chefsUser.objects.filter(email=email)
         if not chef_user_qs.exists():
-            messages.info(request, "Chef account not found. Please register first.")
-            return redirect(f'/accounts/register/?email={quote(email)}')
+            messages.info(request, "Chef account not found. Please create a chef account first.")
+            return redirect(f'/accounts/chef-register/?email={quote(email)}')
 
         chef_user = chef_user_qs.first()
+        if chef_user.role != chefsUser.Role.VENDOR:
+            messages.info(request, "This is a customer account. Create a separate chef account to use Chef Console.")
+            return redirect('/accounts/chef-register/')
         if not chef_user.is_verified:
             if settings.DEBUG:
                 chef_user.is_verified = True
@@ -133,12 +166,10 @@ def chef_login_page(request):
             if fallback_user and fallback_user.check_password(password):
                 user = fallback_user
         if user:
-            _prepare_fresh_session_for_user_login(request, user)
-            login(request, user)
-            request.session["login_mode"] = "chef"
+            request.session["chef_user_id"] = user.id
             notify_login_welcome(user)
             messages.success(request, "Chef login successful.")
-            return redirect(next_url or '/accounts/chef-side/')
+            return redirect(_safe_next_url(request, '/accounts/chef-side/'))
 
         messages.warning(request, "Invalid credentials.")
         return redirect('/accounts/chef-login/')
@@ -182,6 +213,38 @@ def register(request):
         return redirect('/accounts/login/')
 
     return render(request, 'accounts/register.html', {"prefill_email": prefill_email})
+
+
+def chef_register(request):
+    prefill_email = request.GET.get("email", "")
+
+    if request.method == "POST":
+        first_name = (request.POST.get("first_name") or "").strip()
+        last_name = (request.POST.get("last_name") or "").strip()
+        email = (request.POST.get("email") or "").strip().lower()
+        phone_number = (request.POST.get("phone_number") or "").strip()
+        password = request.POST.get("password") or ""
+
+        if chefsUser.objects.filter(Q(email=email) | Q(phone_number=phone_number)).exists():
+            messages.warning(request, "An account already exists with this email or phone number.")
+            return redirect('/accounts/chef-register/')
+
+        user = chefsUser.objects.create(
+            username=phone_number or email,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone_number=phone_number,
+            role=chefsUser.Role.VENDOR,
+            email_token=generateRandomToken(),
+            is_verified=True,
+        )
+        user.set_password(password)
+        user.save()
+        messages.success(request, "Chef account created. Login to complete your chef profile.")
+        return redirect('/accounts/chef-login/')
+
+    return render(request, 'accounts/chef_register.html', {"prefill_email": prefill_email})
 
 def verify_email_token(request, token):
     try:
@@ -227,12 +290,12 @@ def verify_otp(request, email):
         otp = request.POST.get('otp')
         chef_user = chefsUser.objects.get(email=email) # Using your new model name
 
-        if otp == chef_user.otp:
+        if otp == chef_user.otp and chef_user.role == chefsUser.Role.CUSTOMER:
             login(request, chef_user)
+            request.session["login_mode"] = "customer"
             notify_login_welcome(chef_user)
             messages.success(request, "Verification Successful!")
-            # Redirect to profile setup instead of home
-            return redirect('chef_profile_setup') 
+            return redirect('/')
         else:
             messages.warning(request, "Wrong OTP.")
             return redirect('verify_otp', email=email)
@@ -240,18 +303,13 @@ def verify_otp(request, email):
     return render(request, 'verify_otp.html', {'email': email})
 
 
-@login_required
 def chef_logout(request):
-    request.session.pop("login_mode", None)
+    request.session.pop("chef_user_id", None)
     messages.success(request, "Chef panel logout successful.")
     return redirect('/')
 
-@login_required
+@_chef_login_required
 def chef_profile_setup(request):
-    if request.session.get("login_mode") != "chef":
-        messages.info(request, "Please login from Chef Login to access chef-side.")
-        return redirect('/accounts/chef-login/?next=/accounts/chef-setup/')
-
     if request.method == "POST":
         chef_name = request.POST.get('chef_name')
         description = request.POST.get('description')
@@ -260,10 +318,10 @@ def chef_profile_setup(request):
         images = request.FILES.getlist('food_images')
 
         chef, _ = Chef.objects.update_or_create(
-            chef_owner=request.user,
+            chef_owner=request.chef_user,
             defaults={
                 'chef_name': chef_name,
-                'chef_slug': _build_unique_chef_slug(chef_name, request.user.id),
+                'chef_slug': _build_unique_chef_slug(chef_name, request.chef_user.id),
                 'chef_description': description,
                 'location': location,
                 'service_price': price,
@@ -280,7 +338,7 @@ def chef_profile_setup(request):
 
 def _chef_dashboard_context(request):
     search_query = (request.GET.get("q") or "").strip()
-    chef_profile = Chef.objects.filter(chef_owner=request.user).first()
+    chef_profile = Chef.objects.filter(chef_owner=request.chef_user).first()
     dishes = Dish.objects.filter(chef=chef_profile).order_by('-id') if chef_profile else Dish.objects.none()
     live_dishes = dishes.filter(
         is_available=True
@@ -409,12 +467,8 @@ def _dish_availability_deadline(hours_value, minutes_value):
         return None, 0
     return timezone.now() + timedelta(minutes=total_minutes), total_minutes
 
-@login_required
+@_chef_login_required
 def chef_side(request):
-    if request.session.get("login_mode") != "chef":
-        messages.info(request, "Please login from Chef Login to access chef-side.")
-        return redirect('/accounts/chef-login/?next=/accounts/chef-side/')
-
     context = _chef_dashboard_context(request)
     if not context['chef_profile']:
         return redirect('chef_profile_setup')
@@ -422,12 +476,8 @@ def chef_side(request):
     return render(request, 'chef_side.html', context)
 
 
-@login_required
+@_chef_login_required
 def chef_my_dishes(request):
-    if request.session.get("login_mode") != "chef":
-        messages.info(request, "Please login from Chef Login to access chef-side.")
-        return redirect('/accounts/chef-login/?next=/accounts/chef-side/my-dishes/')
-
     context = _chef_dashboard_context(request)
     if not context['chef_profile']:
         return redirect('chef_profile_setup')
@@ -436,12 +486,8 @@ def chef_my_dishes(request):
     return render(request, 'chef_my_dishes.html', context)
 
 
-@login_required
+@_chef_login_required
 def chef_orders(request):
-    if request.session.get("login_mode") != "chef":
-        messages.info(request, "Please login from Chef Login to access chef-side.")
-        return redirect('/accounts/chef-login/?next=/accounts/chef-side/orders/')
-
     context = _chef_dashboard_context(request)
     if not context['chef_profile']:
         return redirect('chef_profile_setup')
@@ -449,15 +495,11 @@ def chef_orders(request):
     return render(request, 'chef_orders.html', context)
 
 
-@login_required
+@_chef_login_required
 def remove_chef_order(request, order_id):
     if request.method != "POST":
         return redirect('chef_orders')
-    if request.session.get("login_mode") != "chef":
-        messages.info(request, "Please login from Chef Login to access chef-side.")
-        return redirect('/accounts/chef-login/?next=/accounts/chef-side/orders/')
-
-    chef_profile = Chef.objects.filter(chef_owner=request.user).first()
+    chef_profile = Chef.objects.filter(chef_owner=request.chef_user).first()
     if not chef_profile:
         return redirect('chef_profile_setup')
 
@@ -471,15 +513,11 @@ def remove_chef_order(request, order_id):
     return redirect('chef_orders')
 
 
-@login_required
+@_chef_login_required
 def clear_chef_orders(request):
     if request.method != "POST":
         return redirect('chef_orders')
-    if request.session.get("login_mode") != "chef":
-        messages.info(request, "Please login from Chef Login to access chef-side.")
-        return redirect('/accounts/chef-login/?next=/accounts/chef-side/orders/')
-
-    chef_profile = Chef.objects.filter(chef_owner=request.user).first()
+    chef_profile = Chef.objects.filter(chef_owner=request.chef_user).first()
     if not chef_profile:
         return redirect('chef_profile_setup')
 
@@ -491,12 +529,8 @@ def clear_chef_orders(request):
     return redirect('chef_orders')
 
 
-@login_required
+@_chef_login_required
 def chef_earnings(request):
-    if request.session.get("login_mode") != "chef":
-        messages.info(request, "Please login from Chef Login to access chef-side.")
-        return redirect('/accounts/chef-login/?next=/accounts/chef-side/earnings/')
-
     context = _chef_dashboard_context(request)
     if not context['chef_profile']:
         return redirect('chef_profile_setup')
@@ -504,12 +538,8 @@ def chef_earnings(request):
     return render(request, 'chef_earnings.html', context)
 
 
-@login_required
+@_chef_login_required
 def chef_profile(request):
-    if request.session.get("login_mode") != "chef":
-        messages.info(request, "Please login from Chef Login to access chef-side.")
-        return redirect('/accounts/chef-login/?next=/accounts/chef-side/profile/')
-
     context = _chef_dashboard_context(request)
     chef_profile = context['chef_profile']
 
@@ -524,23 +554,23 @@ def chef_profile(request):
         price = request.POST.get('price')
         description = request.POST.get('description')
 
-        request.user.first_name = first_name
-        request.user.last_name = last_name
-        request.user.phone_number = phone_number
-        request.user.save(update_fields=['first_name', 'last_name', 'phone_number'])
+        request.chef_user.first_name = first_name
+        request.chef_user.last_name = last_name
+        request.chef_user.phone_number = phone_number
+        request.chef_user.save(update_fields=['first_name', 'last_name', 'phone_number'])
 
         if chef_profile:
             chef_profile.chef_name = chef_name
-            chef_profile.chef_slug = _build_unique_chef_slug(chef_name, request.user.id)
+            chef_profile.chef_slug = _build_unique_chef_slug(chef_name, request.chef_user.id)
             chef_profile.location = location
             chef_profile.service_price = price
             chef_profile.chef_description = description
             chef_profile.save()
         else:
             chef_profile = Chef.objects.create(
-                chef_owner=request.user,
+                chef_owner=request.chef_user,
                 chef_name=chef_name,
-                chef_slug=_build_unique_chef_slug(chef_name, request.user.id),
+                chef_slug=_build_unique_chef_slug(chef_name, request.chef_user.id),
                 location=location,
                 service_price=price or 0,
                 chef_description=description or "",
@@ -554,12 +584,8 @@ def chef_profile(request):
     return render(request, 'chef_profile.html', context)
 
 
-@login_required
+@_chef_login_required
 def add_dish(request):
-    if request.session.get("login_mode") != "chef":
-        messages.info(request, "Please login from Chef Login to access chef-side.")
-        return redirect('/accounts/chef-login/?next=/accounts/chef-side/add-dish/')
-
     context = _chef_dashboard_context(request)
     chef_profile = context['chef_profile']
 
@@ -611,16 +637,12 @@ def add_dish(request):
     return render(request, "chef_add_dish.html", context)
 
 
-@login_required
+@_chef_login_required
 def remove_dish(request, dish_id):
-    if request.session.get("login_mode") != "chef":
-        messages.info(request, "Please login from Chef Login to access chef-side.")
-        return redirect('/accounts/chef-login/?next=/accounts/chef-side/my-dishes/')
-
     if request.method != "POST":
         return redirect("chef_my_dishes")
 
-    chef_profile = Chef.objects.filter(chef_owner=request.user).first()
+    chef_profile = Chef.objects.filter(chef_owner=request.chef_user).first()
     dish = Dish.objects.filter(id=dish_id, chef=chef_profile).first()
     if not dish:
         messages.warning(request, "Dish not found.")

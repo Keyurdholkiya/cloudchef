@@ -24,15 +24,19 @@ STATICFILES_DIRS = [
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-xljk!wzbtyq2p-^*xiqfz+lt!aslm089o4)ogt6m$ld588%$e_'
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-local-development-only-change-me",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "true").lower() in {"1", "true", "yes"}
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "0.0.0.0"]
-if DEBUG:
-    # Local dev on phone / same Wi-Fi / hotspot
-    ALLOWED_HOSTS += ["*"]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,0.0.0.0").split(",")
+    if host.strip()
+]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1",
@@ -63,6 +67,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -99,7 +104,7 @@ WSGI_APPLICATION = 'cloudchef.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.getenv('DATABASE_PATH', BASE_DIR / 'db.sqlite3'),
     }
 }
 
@@ -139,6 +144,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]

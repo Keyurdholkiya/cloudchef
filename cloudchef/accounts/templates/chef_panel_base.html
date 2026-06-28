@@ -247,9 +247,9 @@
     <div class="cp-user">
       <div class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">Online</div>
       <div class="cp-user-card">
-        <div class="cp-avatar">{{ request.user.first_name|default:"C"|slice:":1"|upper }}</div>
+        <div class="cp-avatar">{{ request.chef_user.first_name|default:"C"|slice:":1"|upper }}</div>
         <div>
-          <div class="fw-bold">{{ request.user.get_full_name|default:request.user.email }}</div>
+          <div class="fw-bold">{{ request.chef_user.get_full_name|default:request.chef_user.email }}</div>
           <small>4.8 | Chef</small>
         </div>
       </div>
@@ -271,8 +271,8 @@
         <h6 class="mb-2">Chef Profile</h6>
         {% if chef_profile %}
         <div class="label">Kitchen</div><div class="value">{{ chef_profile.chef_name }}</div>
-        <div class="label">Email</div><div class="value">{{ request.user.email }}</div>
-        <div class="label">Phone</div><div class="value">{{ request.user.phone_number|default:"-" }}</div>
+        <div class="label">Email</div><div class="value">{{ request.chef_user.email }}</div>
+        <div class="label">Phone</div><div class="value">{{ request.chef_user.phone_number|default:"-" }}</div>
         <div class="label">Location</div><div class="value">{{ chef_profile.location }}</div>
         {% else %}
         <div class="value">Profile not completed.</div>
