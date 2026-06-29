@@ -208,14 +208,5 @@ CloudChef is deployed using:
 
 ---
 
-# 👨‍💻 Author
-
-**Keyur**
-
-Computer Engineering Student
-
-Learning Cloud • DevOps • Docker • AWS • CI/CD • Django
-
----
 
 ⭐ If you like this project, don't forget to star the repository.
